@@ -67,7 +67,22 @@ class URL(object):
             yield getattr(self, name)
 
 
+def parse_host(url: str) -> str:
+    """
+    Helper function to extract the host from a URL string.
+    """
+    parsed = urlparse(url, scheme="https", allow_fragments=False)
+    if parsed.netloc:
+        return parsed.netloc
+
+    # if a domain is specified then it will be in the path
+    return parsed.path.split("/")[0]
+
+
 def parse_content_type(mime: str) -> tuple[str, dict[str, str]]:
+    """
+    Helper function to extract the main content type and parameters from a MIME string.
+    """
     msg = Message()
     msg["content-type"] = mime
     params = msg.get_params()

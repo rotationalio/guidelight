@@ -1,6 +1,6 @@
 import pytest
 
-from guidelight.url import URL, parse_content_type
+from guidelight.url import URL, parse_host, parse_content_type
 
 
 @pytest.mark.parametrize(
@@ -65,6 +65,20 @@ def test_resolve(url, endpoint, query, expected):
     base = URL.parse(url)
     resolved = base.resolve(*endpoint, query=query)
     assert str(resolved) == expected
+
+
+@pytest.mark.parametrize("input,expected", [
+    ("http://example.com", "example.com"),
+    ("https://example.com/path", "example.com"),
+    ("ftp://ftp.example.com/resource", "ftp.example.com"),
+    ("http://example.com:8080", "example.com:8080"),
+    ("http://localhost", "localhost"),
+    ("http://localhost:9000/path", "localhost:9000"),
+    ("http://example.local", "example.local"),
+])
+def test_parse_host(input, expected):
+    actual = parse_host(input)
+    assert actual == expected
 
 
 @pytest.mark.parametrize("input,mime,params", [
