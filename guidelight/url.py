@@ -28,7 +28,7 @@ class URL(object):
         self.query = query
         self.fragment = fragment
 
-    def resolve(self, *endpoint: tuple[str], query: dict = None) -> "URL":
+    def resolve(self, *endpoint: str, query: dict = None) -> "URL":
         """
         Resolve the specified endpoint against this URL, returning a new URL object.
 
