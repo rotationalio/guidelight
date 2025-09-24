@@ -1,0 +1,38 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+      - "v*"
+  pull_request:
+
+jobs:
+  pytest:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/guidelight
+    strategy:
+      matrix:
+        python-version: ["3.11.x", "3.12.x", "3.13.x"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+            path: ${{ github.workspace }}/guidelight
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r tests/requirements.txt
+
+      - name: Run Tests
+        run: pytest
