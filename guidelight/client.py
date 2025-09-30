@@ -164,15 +164,12 @@ class Client(object):
         query: dict = None,
         require_authentication: bool = True,
     ) -> dict:
-        self._pre_flight(require_authentication=require_authentication)
-        headers = self._request_headers
+        headers = self._pre_flight(require_authentication=require_authentication)
         url = self._make_endpoint(*endpoint, query=query)
 
         logger.debug(f"GET {repr(url)}")
 
-        rep = self.session.get(
-            str(url), headers=headers, timeout=self.timeout
-        )
+        rep = self.session.get(str(url), headers=headers, timeout=self.timeout)
 
         return self.handle(rep)
 
@@ -183,8 +180,7 @@ class Client(object):
         query: dict = None,
         require_authentication: bool = True,
     ) -> dict:
-        self._pre_flight(require_authentication=require_authentication)
-        headers = self._request_headers
+        headers = self._pre_flight(require_authentication=require_authentication)
         url = self._make_endpoint(*endpoint, query=query)
 
         logger.debug(f"POST {repr(url)}")
@@ -202,8 +198,7 @@ class Client(object):
         query: dict = None,
         require_authentication: bool = True,
     ) -> dict:
-        self._pre_flight(require_authentication=require_authentication)
-        headers = self._request_headers
+        headers = self._pre_flight(require_authentication=require_authentication)
         url = self._make_endpoint(*endpoint, query=query)
 
         logger.debug(f"PUT {repr(url)}")
@@ -220,15 +215,12 @@ class Client(object):
         query: dict = None,
         require_authentication: bool = True,
     ) -> dict:
-        self._pre_flight(require_authentication=require_authentication)
-        headers = self._request_headers
+        headers = self._pre_flight(require_authentication=require_authentication)
         url = self._make_endpoint(*endpoint, query=query)
 
         logger.debug(f"DELETE {repr(url)}")
 
-        rep = self.session.delete(
-            str(url), headers=headers, timeout=self.timeout
-        )
+        rep = self.session.delete(str(url), headers=headers, timeout=self.timeout)
 
         return self.handle(rep)
 
@@ -309,15 +301,16 @@ class Client(object):
     def _make_endpoint(self, *endpoint: tuple[str], query: dict = None) -> URL:
         return self.url.resolve("/", "v1", *endpoint, query=query)
 
-    def _pre_flight(self, require_authentication: bool = True) -> None:
+    def _pre_flight(self, require_authentication: bool = True) -> dict[str, str]:
         if not self.url:
             raise ClientError("no Endeavor URL has been configured")
 
-        self._request_headers = {}
-        self._request_headers.update(self._headers)
+        request_headers = {}
+        request_headers.update(self._headers)
 
         if require_authentication:
-            self._request_headers.update(self._authentication_headers())
+            request_headers.update(self._authentication_headers())
+        return request_headers
 
     def _authentication_headers(self) -> dict[str, str]:
         if not self.is_authenticated():

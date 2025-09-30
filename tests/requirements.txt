@@ -5,3 +5,4 @@ pyflakes==3.4.0
 pytest-cov==7.0.0
 pytest-flakes==4.0.5
 pytest-spec==5.1.0
+pytest-httpserver==1.1.3
