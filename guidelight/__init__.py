@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 from .client import Client
 
 
-def connect(url=None, client_id=None, client_secret=None, timeout=None):
+def connect(url=None, client_id=None, client_secret=None, auth_url=None, timeout=None):
     """
     Create an API client with the specified URL and api key material. If not specified,
     this function will first load any .env files in the local path, then attempt to
@@ -45,18 +45,27 @@ def connect(url=None, client_id=None, client_secret=None, timeout=None):
         The Client Secret from your API Key to access your Endeavor server. If not set,
         it is discovered from the $ENDEAVOR_CLIENT_SECRET environment variable.
 
+    auth_url : str
+        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
+        set, it is discovered from the $ENDEAVOR_AUTH_URL environment variable and falls
+        back to the url specified otherwise.
+
     timeout : float
         The number of seconds to wait for a response until error.
     """
 
-    if url is None or client_id is None or client_secret is None:
+    if url is None or client_id is None or client_secret is None or auth_url is None:
         # We need to load information from the environment
         load_dotenv()
 
     # create the client and perform the pre-flight now to authorize the client
     # now so the client's first actual data request isn't delayed by seconds
     client = Client(
-        url=url, client_id=client_id, client_secret=client_secret, timeout=timeout
+        url=url,
+        client_id=client_id,
+        client_secret=client_secret,
+        auth_url=auth_url,
+        timeout=timeout
     )
     client._pre_flight(require_authentication=True)
     return client
