@@ -32,6 +32,7 @@ logger = logging.getLogger("endeavor")
 ENV_URL = "ENDEAVOR_URL"
 ENV_CLIENT_ID = "ENDEAVOR_CLIENT_ID"
 ENV_CLIENT_SECRET = "ENDEAVOR_CLIENT_SECRET"
+ENV_AUTH_URL = "ENDEAVOR_AUTH_URL"
 
 # Default header values
 ACCEPT = "application/json"
@@ -60,6 +61,11 @@ class Client(object):
         to the value of the `ENDEAVOR_CLIENT_SECRET` environment variable. If neither is
         set, an error is raised.
 
+    auth_url : str, optional
+        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
+        provided, defaults to the value of the `ENDEAVOR_AUTH_URL` environment variable
+        and falls back to the url specified otherwise.
+
     timeout : float, optional
         The number of seconds to wait for a response until error.
 
@@ -80,6 +86,7 @@ class Client(object):
         url=None,
         client_id=None,
         client_secret=None,
+        auth_url=None,
         timeout=None,
         pool_connections=8,
         pool_maxsize=16,
@@ -92,6 +99,7 @@ class Client(object):
         self.url = url or os.environ.get(ENV_URL, "")
         self.client_id = client_id or os.environ.get(ENV_CLIENT_ID, None)
         self.client_secret = client_secret or os.environ.get(ENV_CLIENT_SECRET, None)
+        self.auth_url = auth_url or os.environ.get(ENV_AUTH_URL, None)
 
         user_agent = f"guidelight/{get_version(short=True)} python/{python_version()}"
         self._headers = {
@@ -134,6 +142,16 @@ class Client(object):
         self._url = URL.parse(value) if value else None
 
     @property
+    def auth_url(self):
+        if self._auth_url is None:
+            return self.url
+        return self._auth_url
+
+    @auth_url.setter
+    def auth_url(self, value):
+        self._auth_url = URL.parse(value) if value else None
+
+    @property
     def host(self):
         if self._host is None and self.url:
             parsed = self.url
@@ -157,6 +175,13 @@ class Client(object):
                 self._prefix = "https"
 
         return self._prefix
+
+    def status(self):
+        """
+        Executes a status request to the Endeavor server to verify connectivity and to
+        retrieve server version and uptime information.
+        """
+        return self.get("status", require_authentication=False)
 
     def get(
         self,
@@ -301,6 +326,9 @@ class Client(object):
     def _make_endpoint(self, *endpoint: tuple[str], query: dict = None) -> URL:
         return self.url.resolve("/", "v1", *endpoint, query=query)
 
+    def _make_auth_endpoint(self, *endpoint: tuple[str], query: dict = None) -> URL:
+        return self.auth_url.resolve("/", "v1", *endpoint, query=query)
+
     def _pre_flight(self, require_authentication: bool = True) -> dict[str, str]:
         if not self.url:
             raise ClientError("no Endeavor URL has been configured")
@@ -327,7 +355,15 @@ class Client(object):
             raise AuthenticationError("no client id or secret specified")
 
         apikey = {"client_id": self.client_id, "client_secret": self.client_secret}
-        rep = self.post(apikey, "authenticate", require_authentication=False)
+        endpoint = self._make_auth_endpoint("authenticate")
+        headers = self._pre_flight(require_authentication=False)
+
+        logger.debug(f"POST {repr(endpoint)}")
+        rep = self.session.post(
+            str(endpoint), json=apikey, headers=headers, timeout=self.timeout
+        )
+
+        rep = self.handle(rep)
         return Credentials(rep["access_token"], rep["refresh_token"])
 
     def _reauthenticate(self) -> Credentials:
@@ -335,5 +371,13 @@ class Client(object):
             raise AuthenticationError("no refresh token available")
 
         refresh = {"refresh_token": str(self._creds.refresh_token)}
-        rep = self.post(refresh, "reauthenticate", require_authentication=False)
+        endpoint = self._make_auth_endpoint("reauthenticate")
+        headers = self._pre_flight(require_authentication=False)
+
+        logger.debug(f"POST {repr(endpoint)}")
+        rep = self.session.post(
+            str(endpoint), json=refresh, headers=headers, timeout=self.timeout
+        )
+
+        rep = self.handle(rep)
         return Credentials(rep["access_token"], rep["refresh_token"])
