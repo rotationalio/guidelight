@@ -7,6 +7,8 @@ projects and training.
 import os
 import logging
 
+from typing import Any
+
 from requests import Response
 from platform import python_version
 from requests.sessions import Session
@@ -79,19 +81,25 @@ class Client(object):
         The maximum number of retries for a request. Note, this only applies to failed
         DNS lookups, socket connections and connection timeouts, never to requests where
         data has made it to the server.
+    api_version : str, default="v2"
+        The version of the API to use.
+    auth_version : str, default="v1"
+        The version of the authentication API to use.
     """
 
     def __init__(
         self,
-        url=None,
-        client_id=None,
-        client_secret=None,
-        auth_url=None,
-        timeout=None,
-        pool_connections=8,
-        pool_maxsize=16,
-        max_retries=3,
-    ):
+        url: str | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        auth_url: str | None = None,
+        timeout: float | None = None,
+        pool_connections: int = 8,
+        pool_maxsize: int = 16,
+        max_retries: int = 3,
+        api_version: str = "v2",
+        auth_version: str = "v1",
+    ) -> None:
         self._host = None
         self._creds = None
         self._prefix = None
@@ -100,6 +108,8 @@ class Client(object):
         self.client_id = client_id or os.environ.get(ENV_CLIENT_ID, None)
         self.client_secret = client_secret or os.environ.get(ENV_CLIENT_SECRET, None)
         self.auth_url = auth_url or os.environ.get(ENV_AUTH_URL, None)
+        self.api_version = api_version
+        self.auth_version = auth_version
 
         user_agent = f"guidelight/{get_version(short=True)} python/{python_version()}"
         self._headers = {
@@ -185,81 +195,137 @@ class Client(object):
 
     def get(
         self,
-        *endpoint: tuple[str],
-        query: dict = None,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
         require_authentication: bool = True,
+        **options: Any,
     ) -> dict:
-        headers = self._pre_flight(require_authentication=require_authentication)
-        url = self._make_endpoint(*endpoint, query=query)
-
-        logger.debug(f"GET {repr(url)}")
-
-        rep = self.session.get(str(url), headers=headers, timeout=self.timeout)
-
-        return self.handle(rep)
+        return self._request(
+            "GET",
+            *endpoint,
+            query=query,
+            require_authentication=require_authentication,
+            **options,
+        )
 
     def post(
         self,
         data,
-        *endpoint: tuple[str],
-        query: dict = None,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
         require_authentication: bool = True,
+        **options: Any,
     ) -> dict:
-        headers = self._pre_flight(require_authentication=require_authentication)
-        url = self._make_endpoint(*endpoint, query=query)
-
-        logger.debug(f"POST {repr(url)}")
-
-        rep = self.session.post(
-            str(url), json=data, headers=headers, timeout=self.timeout
+        return self._request(
+            "POST",
+            *endpoint,
+            data=data,
+            query=query,
+            require_authentication=require_authentication,
+            **options,
         )
-
-        return self.handle(rep)
 
     def put(
         self,
         data,
-        *endpoint: tuple[str],
-        query: dict = None,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
         require_authentication: bool = True,
+        **options: Any,
     ) -> dict:
-        headers = self._pre_flight(require_authentication=require_authentication)
-        url = self._make_endpoint(*endpoint, query=query)
-
-        logger.debug(f"PUT {repr(url)}")
-
-        rep = self.session.put(
-            str(url), json=data, headers=headers, timeout=self.timeout
+        return self._request(
+            "PUT",
+            *endpoint,
+            data=data,
+            query=query,
+            require_authentication=require_authentication,
+            **options,
         )
 
-        return self.handle(rep)
+    def patch(
+        self,
+        data: dict,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
+        require_authentication: bool = True,
+        **options: Any,
+    ) -> dict:
+        return self._request(
+            "PATCH",
+            *endpoint,
+            data=data,
+            query=query,
+            require_authentication=require_authentication,
+            **options,
+        )
 
     def delete(
         self,
-        *endpoint: tuple[str],
-        query: dict = None,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
         require_authentication: bool = True,
+        **options: Any,
     ) -> dict:
-        headers = self._pre_flight(require_authentication=require_authentication)
-        url = self._make_endpoint(*endpoint, query=query)
+        return self._request(
+            "DELETE",
+            *endpoint,
+            query=query,
+            require_authentication=require_authentication,
+            **options,
+        )
 
-        logger.debug(f"DELETE {repr(url)}")
+    def execute(
+        self,
+        agent: str,
+        task: str,
+        context: dict[str, Any] | None = None,
+        *,
+        environment: str | None = None,
+        version: str | None = None,
+        files: dict[str, Any] | None = None,
+    ) -> dict:
+        # this method executes a deployed task
+        query = {}
+        if environment is not None:
+            query["environment"] = environment
+        if version is not None:
+            query["version"] = version
 
-        rep = self.session.delete(str(url), headers=headers, timeout=self.timeout)
+        if files:
+            data = files
+        else:
+            data = context or {}
 
-        return self.handle(rep)
+        return self._request(
+            "POST",
+            agent,
+            task,
+            data=data,
+            query=query,
+            files=files,
+            execution=True,
+        )
 
-    def handle(self, rep: Response) -> dict:
+    def handle(
+        self,
+        rep: Response,
+        *,
+        stream: bool = False,
+    ) -> dict:
         """
         Handle the response from an API request, raising an error if the request failed.
         """
         if rep.status_code == 401 or rep.status_code == 403:
+            print(f"{rep.status_code} response from {self.host}")
             raise AuthenticationError("authentication failed")
 
         elif rep.status_code == 204:
             return None
 
         elif 200 <= rep.status_code < 300:
+            if stream:
+                return rep
+
             mimetype, _ = parse_content_type(rep.headers.get("Content-Type"))
             if mimetype == "application/json":
                 return rep.json()
@@ -267,7 +333,7 @@ class Client(object):
                 return rep.content
 
         elif 400 <= rep.status_code < 500:
-            logger.warning(f"client error: {rep.status_code} {repr(rep.content)}")
+            logger.warning(f"client error: {rep.status_code} {rep.content!r}")
             message = f"{rep.status_code} response from {self.host}"
 
             try:
@@ -287,8 +353,8 @@ class Client(object):
                 raise ClientError(message)
 
         elif 500 <= rep.status_code < 600:
-            logger.warning(f"server error: {rep.status_code} {repr(rep.content)}")
-            message = f"{rep.status_code} response from {self._host}]"
+            logger.warning(f"server error: {rep.status_code} {rep.content!r}")
+            message = f"{rep.status_code} response from {self._host}"
 
             try:
                 err = rep.json()
@@ -323,11 +389,94 @@ class Client(object):
             host = host.split(":")[0]
         return host == "localhost" or host.endswith(".local")
 
-    def _make_endpoint(self, *endpoint: tuple[str], query: dict = None) -> URL:
-        return self.url.resolve("/", "v1", *endpoint, query=query)
+    def _make_endpoint(
+        self,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
+    ) -> URL:
+        return self.url.resolve(
+            "/",
+            self.api_version,
+            *endpoint,
+            query=query,
+        )
 
-    def _make_auth_endpoint(self, *endpoint: tuple[str], query: dict = None) -> URL:
-        return self.auth_url.resolve("/", "v1", *endpoint, query=query)
+    def _make_auth_endpoint(
+        self,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
+    ) -> URL:
+        return self.auth_url.resolve(
+            "/",
+            self.auth_version,
+            *endpoint,
+            query=query,
+        )
+
+    def _make_execution_endpoint(
+        self,
+        *endpoint: str,
+        query: dict[str, Any] | None = None,
+    ) -> URL:
+        # this method creates an endpoint to execute a deployed task
+        return self.url.resolve(
+            "/",
+            "api",
+            *endpoint,
+            query=query,
+        )
+
+    def _request(
+        self,
+        method: str,
+        *endpoint: str,
+        data: dict[str, Any] | None = None,
+        query: dict[str, Any] | None = None,
+        extra_headers: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
+        require_authentication: bool = True,
+        stream: bool = False,
+        execution: bool = False,
+    ) -> dict:
+        headers = self._pre_flight(
+            require_authentication=require_authentication,
+        )
+        headers.update(extra_headers or {})
+
+        if execution:
+            url = self._make_execution_endpoint(
+                *endpoint,
+                query=query,
+            )
+        else:
+            url = self._make_endpoint(
+                *endpoint,
+                query=query,
+            )
+
+        if files is not None:
+            # requests creates the multipart Content-Type and boundary.
+            headers.pop("Content-Type", None)
+            rep = self.session.request(
+                method,
+                str(url),
+                data=data,
+                files=files,
+                headers=headers,
+                timeout=self.timeout,
+                stream=stream,
+            )
+        else:
+            rep = self.session.request(
+                method,
+                str(url),
+                json=data,
+                headers=headers,
+                timeout=self.timeout,
+                stream=stream,
+            )
+
+        return self.handle(rep, stream=stream)
 
     def _pre_flight(self, require_authentication: bool = True) -> dict[str, str]:
         if not self.url:
@@ -358,7 +507,7 @@ class Client(object):
         endpoint = self._make_auth_endpoint("authenticate")
         headers = self._pre_flight(require_authentication=False)
 
-        logger.debug(f"POST {repr(endpoint)}")
+        logger.debug(f"POST {endpoint!r}")
         rep = self.session.post(
             str(endpoint), json=apikey, headers=headers, timeout=self.timeout
         )
@@ -374,7 +523,7 @@ class Client(object):
         endpoint = self._make_auth_endpoint("reauthenticate")
         headers = self._pre_flight(require_authentication=False)
 
-        logger.debug(f"POST {repr(endpoint)}")
+        logger.debug(f"POST {endpoint!r}")
         rep = self.session.post(
             str(endpoint), json=refresh, headers=headers, timeout=self.timeout
         )
