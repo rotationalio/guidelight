@@ -316,7 +316,6 @@ class Client(object):
         Handle the response from an API request, raising an error if the request failed.
         """
         if rep.status_code == 401 or rep.status_code == 403:
-            print(f"{rep.status_code} response from {self.host}")
             raise AuthenticationError("authentication failed")
 
         elif rep.status_code == 204:
