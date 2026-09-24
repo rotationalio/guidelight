@@ -14,6 +14,7 @@ To connect to Endeavor you will need an API Key; set the following environment v
 
 ```
 ENDEAVOR_URL=https://guidelight.dev
+ENDEAVOR_AUTH_URL=https://auth.guidelight.dev/v1/authenticate
 ENDEAVOR_CLIENT_ID=
 ENDEAVOR_CLIENT_SECRET=
 ```
@@ -23,6 +24,6 @@ You can then connect to Endeavor as follows:
 ```python
 import guidelight as gdl
 
-endeavor = gdl.connect()
+endeavor = gdl.client()
 print(endeavor.status())
 ```
