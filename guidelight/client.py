@@ -412,6 +412,9 @@ class Client(object):
             query=query,
         )
 
+    def _make_login_endpoint(self) -> URL:
+        return self.auth_url.resolve("/login")
+
     def _make_execution_endpoint(
         self,
         *endpoint: str,
@@ -502,9 +505,22 @@ class Client(object):
         if not self.client_id or not self.client_secret:
             raise AuthenticationError("no client id or secret specified")
 
+        # Quarterdeck requires a CSRF cookie and header before accepting credentials.
+        login_endpoint = self._make_login_endpoint()
+        headers = self._pre_flight(require_authentication=False)
+        self.session.get(
+            str(login_endpoint),
+            headers=headers,
+            timeout=self.timeout,
+        )
+
+        csrf_token = self.session.cookies.get("quarterdeck_csrf_token")
+        if not csrf_token:
+            raise AuthenticationError("no CSRF token received from authentication server")
+
         apikey = {"client_id": self.client_id, "client_secret": self.client_secret}
         endpoint = self._make_auth_endpoint("authenticate")
-        headers = self._pre_flight(require_authentication=False)
+        headers["X-Quarterdeck-CSRF-Token"] = csrf_token
 
         logger.debug(f"POST {endpoint!r}")
         rep = self.session.post(
