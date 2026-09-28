@@ -15,8 +15,17 @@ def test_preflight():
     server = HTTPServer()
     server.start()
 
+    # Expect the CSRF bootstrap request
+    server.expect_request("/login").respond_with_data(
+        "",
+        headers={"Set-Cookie": "quarterdeck_csrf_token=csrf-token; Path=/"},
+    )
+
     # Expect authentication request
-    server.expect_request("/v1/authenticate").respond_with_json(
+    server.expect_request(
+        "/v1/authenticate",
+        headers={"X-Quarterdeck-CSRF-Token": "csrf-token"},
+    ).respond_with_json(
         {
             "access_token": "access",
             "refresh_token": "refresh",
