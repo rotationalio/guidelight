@@ -4,21 +4,20 @@ and from an Endeavor server. These requests integrate guidelight with Endeavor f
 projects and training.
 """
 
-import os
+import json
 import logging
-
+import os
+from platform import python_version
 from typing import Any
 
 from requests import Response
-from platform import python_version
-from requests.sessions import Session
 from requests.adapters import HTTPAdapter
+from requests.sessions import Session
 
-from .version import get_version
 from .credentials import Credentials
+from .exceptions import AuthenticationError, ClientError, NotFound, ServerError
 from .url import URL, parse_content_type
-from .exceptions import ClientError, ServerError
-from .exceptions import AuthenticationError, NotFound
+from .version import get_version
 
 try:
     from json import JSONDecodeError
@@ -285,23 +284,21 @@ class Client(object):
         files: dict[str, Any] | None = None,
     ) -> dict:
         # this method executes a deployed task
-        query = {}
+        endpoint = [agent, task]
         if environment is not None:
-            query["environment"] = environment
+            endpoint.insert(0, environment)
         if version is not None:
-            query["version"] = version
+            endpoint.append(version)
 
-        if files:
-            data = files
+        if files is not None:
+            data = {"context": json.dumps(context or {})}
         else:
             data = context or {}
 
         return self._request(
             "POST",
-            agent,
-            task,
+            *endpoint,
             data=data,
-            query=query,
             files=files,
             execution=True,
         )

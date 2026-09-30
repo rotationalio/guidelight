@@ -1,10 +1,12 @@
 import json
+from unittest.mock import patch
 
 from pytest_httpserver import HTTPServer
 from requests import Response as RequestsResponse
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 from guidelight.client import Client
+
 
 def test_preflight():
     """
@@ -52,6 +54,40 @@ def test_path_versions():
     assert str(
         client._make_execution_endpoint("support-bot", "summarize")
     ) == "https://endeavor.example.com/api/support-bot/summarize"
+    assert str(
+        client._make_execution_endpoint(
+            "production", "support-bot", "summarize", "1.1.0"
+        )
+    ) == "https://endeavor.example.com/api/production/support-bot/summarize/1.1.0"
+
+
+def test_execute_uses_version_path_and_context_form_field(tmp_path):
+    client = Client("https://endeavor.example.com")
+    file_path = tmp_path / "example.txt"
+    file_path.write_text("example content")
+
+    with file_path.open("rb") as file_handle:
+        files = {"file": ("example.txt", file_handle, "text/plain")}
+        with patch.object(client, "_request", return_value={}) as request:
+            client.execute(
+                "support-bot",
+                "summarize",
+                context={"instruction": "Summarize this file"},
+                environment="production",
+                version="1.1.0",
+                files=files,
+            )
+
+    request.assert_called_once_with(
+        "POST",
+        "production",
+        "support-bot",
+        "summarize",
+        "1.1.0",
+        data={"context": '{"instruction": "Summarize this file"}'},
+        files=files,
+        execution=True,
+    )
 
 
 def test_patch_sends_json(httpserver):
