@@ -62,13 +62,13 @@ def reference(value: Any, *, allow_slug: bool = False) -> str:
 
     slug = getattr(value, "slug", None)
     identifier = getattr(value, "id", None)
-    if allow_slug and slug:
-        return _safe_reference(slug)
     if identifier:
         value = _safe_reference(str(identifier))
         if not allow_slug and not ULID_RE.fullmatch(value):
             raise ValueError("resource reference must be a valid ULID")
         return value
+    if allow_slug and slug:
+        return _safe_reference(slug)
     raise ValueError("resource must provide an id or supported slug")
 
 

@@ -49,3 +49,13 @@ class ReadOnlyEndpoint(EndeavorError):
     """
     The associated resource does not allow create, update, or delete methods
     """
+
+
+class UnsupportedResponseType(EndeavorError):
+    """The task returned a successful but unsupported media type."""
+
+    def __init__(self, mime_type: str):
+        self.mime_type = mime_type
+        super().__init__(
+            f"unsupported task response content type: {mime_type or '<missing>'}"
+        )
