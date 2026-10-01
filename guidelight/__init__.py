@@ -67,10 +67,13 @@ def connect(url=None, client_id=None, client_secret=None, auth_url=None, timeout
         The Client Secret from your API Key to access your Endeavor server. If not set,
         it is discovered from the $ENDEAVOR_CLIENT_SECRET environment variable.
 
-    auth_url : str
-        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
-        set, it is discovered from the $ENDEAVOR_AUTH_URL environment variable and falls
-        back to the url specified otherwise.
+    auth_url : str, optional
+        The base URL of the authentication server (for example,
+        ``https://auth.guidelight.dev``). If omitted, Guidelight first checks the
+        ``ENDEAVOR_AUTH_URL`` environment variable. For a hosted Endeavor URL, it
+        otherwise derives the authentication host by adding the ``auth.`` subdomain.
+        Localhost and ``.local`` Endeavor URLs require an explicit authentication URL
+        because the authentication service may use a different port.
 
     timeout : float
         The number of seconds to wait for a response until error.
