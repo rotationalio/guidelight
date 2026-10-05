@@ -72,11 +72,8 @@ class Client(object):
 
     auth_url : str, optional
         The base URL of the authentication server (for example,
-        ``https://auth.guidelight.dev``). If omitted, Guidelight first checks the
-        ``ENDEAVOR_AUTH_URL`` environment variable. For a hosted Endeavor URL, it
-        otherwise derives the authentication host by adding the ``auth.`` subdomain.
-        Localhost and ``.local`` Endeavor URLs require an explicit authentication URL
-        because the authentication service may use a different port.
+        ``https://auth.guidelight.dev``). If not provided, defaults to the value of the
+        ``ENDEAVOR_AUTH_URL`` environment variable or falls back to the url specified otherwise.
 
     timeout : float, optional
         The number of seconds to wait for a response until error.
@@ -162,6 +159,8 @@ class Client(object):
 
     @property
     def auth_url(self):
+        if self._auth_url is None:
+            return self.url
         return self._auth_url
 
     @auth_url.setter
@@ -411,29 +410,7 @@ class Client(object):
         *endpoint: str,
         query: dict[str, Any] | None = None,
     ) -> URL:
-        if self.auth_url is not None:
-            base_url = self.auth_url
-        else:
-            if not self.url:
-                raise ClientError("no Endeavor URL has been configured")
-            if self.is_localhost():
-                raise ClientError(
-                    "auth_url is required when the Endeavor URL is localhost"
-                )
-            netloc = self.url.netloc
-            if not netloc.startswith("auth."):
-                netloc = f"auth.{netloc}"
-
-            base_url = URL(
-                scheme=self.url.scheme,
-                netloc=netloc,
-                path="",
-                params="",
-                query="",
-                fragment="",
-            )
-
-        return base_url.resolve(
+        return self.auth_url.resolve(
             "/",
             self.auth_version,
             *endpoint,

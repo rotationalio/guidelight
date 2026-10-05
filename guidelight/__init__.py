@@ -26,12 +26,35 @@ __all__ = ["Client", "Endeavor", "__version__", "__version_info__", "client", "c
 ## Primary API Entry Point
 ##########################################################################
 
+
 def client(url=None, client_id=None, client_secret=None, auth_url=None, timeout=None):
     """
     Create and authenticate a low-level API client.
 
     Use this entry point when direct access to an endpoint is required. For the
     high-level SDK, use :func:`connect` instead.
+
+    Parameters
+    ----------
+    url : str
+        The URL of your Endeavor server (e.g. https://guidelight.dev). If not
+        set, it is discovered from the $ENDEAVOR_URL environment variable.
+
+    client_id : str
+        The Client ID from your API Key to access your Endeavor server. If not set, it
+        is discovered from the $ENDEAVOR_CLIENT_ID environment variable.
+
+    client_secret : str
+        The Client Secret from your API Key to access your Endeavor server. If not set,
+        it is discovered from the $ENDEAVOR_CLIENT_SECRET environment variable.
+
+    auth_url : str, optional
+        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
+        set, it is discovered from the $ENDEAVOR_AUTH_URL environment variable and falls
+        back to the url specified otherwise.
+
+    timeout : float
+        The number of seconds to wait for a response until error.
     """
     if url is None or client_id is None or client_secret is None or auth_url is None:
         load_dotenv()
@@ -68,12 +91,9 @@ def connect(url=None, client_id=None, client_secret=None, auth_url=None, timeout
         it is discovered from the $ENDEAVOR_CLIENT_SECRET environment variable.
 
     auth_url : str, optional
-        The base URL of the authentication server (for example,
-        ``https://auth.guidelight.dev``). If omitted, Guidelight first checks the
-        ``ENDEAVOR_AUTH_URL`` environment variable. For a hosted Endeavor URL, it
-        otherwise derives the authentication host by adding the ``auth.`` subdomain.
-        Localhost and ``.local`` Endeavor URLs require an explicit authentication URL
-        because the authentication service may use a different port.
+        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
+        set, it is discovered from the $ENDEAVOR_AUTH_URL environment variable and falls
+        back to the url specified otherwise.
 
     timeout : float
         The number of seconds to wait for a response until error.

@@ -62,7 +62,7 @@ def test_path_versions():
         "https://endeavor.example.com/v2/agents"
     )
     assert str(client._make_auth_endpoint("authenticate")) == (
-        "https://auth.endeavor.example.com/v1/authenticate"
+        "https://endeavor.example.com/v1/authenticate"
     )
     assert (
         str(client._make_execution_endpoint("support-bot", "summarize"))
@@ -654,35 +654,6 @@ def test_handle_includes_status_and_detail_in_error(status, exception):
         match=f"HTTP {status} Failure: detailed failure",
     ):
         client.handle(rep)
-
-
-def test_auth_endpoint_derives_authentication_subdomain():
-    client = Client("https://qa.guidelight.dev")
-
-    endpoint = client._make_auth_endpoint("authenticate")
-
-    assert str(endpoint) == "https://auth.qa.guidelight.dev/v1/authenticate"
-
-
-def test_auth_endpoint_uses_explicit_authentication_url():
-    client = Client(
-        "https://qa.guidelight.dev",
-        auth_url="https://identity.example.com",
-    )
-
-    endpoint = client._make_auth_endpoint("authenticate")
-
-    assert str(endpoint) == "https://identity.example.com/v1/authenticate"
-
-
-def test_auth_endpoint_requires_authentication_url_for_localhost():
-    client = Client("http://localhost:8000")
-
-    with pytest.raises(
-        ClientError,
-        match="auth_url is required when the Endeavor URL is localhost",
-    ):
-        client._make_auth_endpoint("authenticate")
 
 
 def test_execute_uses_configured_timeout(monkeypatch):

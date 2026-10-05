@@ -19,8 +19,7 @@ ENDEAVOR_CLIENT_ID=your-client-id
 ENDEAVOR_CLIENT_SECRET=your-client-secret
 ```
 
-`ENDEAVOR_AUTH_URL` is the authentication service's base URL. Guidelight adds the `/v1/authenticate` or `/v1/reauthenticate` path. It is optional for hosted deployments. For standard hosted deployments, Guidelight can derive the authentication host by adding the
-`auth.` subdomain. For localhost or a custom authentication host, set `ENDEAVOR_AUTH_URL` explicitly.
+`ENDEAVOR_AUTH_URL` is the authentication service's base URL. Guidelight adds the `/v1/authenticate` path.
 
 Create a high-level Endeavor SDK:
 
