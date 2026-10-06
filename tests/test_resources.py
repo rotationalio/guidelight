@@ -80,8 +80,8 @@ def test_agents_crud_uses_explicit_paths_and_request_fields():
 
     assert client.calls[0][1] == ("agents", "support-bot")
     assert client.calls[1][1] == ("agents",)
-    assert client.calls[2][1] == ("agents", "support-bot")
-    assert client.calls[3][1] == ("agents", "support-bot")
+    assert client.calls[2][1] == ("agents", "01J7ABCDEF0123456789ABCDEFG")
+    assert client.calls[3][1] == ("agents", "01J7ABCDEF0123456789ABCDEFG")
 
 
 def test_agent_tasks_is_explicitly_scoped():

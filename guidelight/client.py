@@ -6,17 +6,25 @@ projects and training.
 
 import os
 import logging
+import warnings
 
-from typing import Any
+from typing import Any, Mapping
 
 from requests import Response
 from platform import python_version
 from requests.sessions import Session
 from requests.adapters import HTTPAdapter
 
-from .version import get_version
 from .credentials import Credentials
+from .helpers import (
+    _format_response_error,
+    _serialize_context,
+    _validate_path_component,
+    _validate_semver,
+    _url_origin,
+)
 from .url import URL, parse_content_type
+from .version import get_version
 from .exceptions import ClientError, ServerError
 from .exceptions import AuthenticationError, NotFound
 
@@ -40,7 +48,6 @@ ENV_AUTH_URL = "ENDEAVOR_AUTH_URL"
 ACCEPT = "application/json"
 ACCEPT_LANG = "en-US,en"
 ACCEPT_ENCODE = "gzip, deflate, br"
-CONTENT_TYPE = "application/json; charset=utf-8"
 
 
 class Client(object):
@@ -64,9 +71,9 @@ class Client(object):
         set, an error is raised.
 
     auth_url : str, optional
-        The URL of your authentication server (e.g. https://auth.guidelight.dev). If not
-        provided, defaults to the value of the `ENDEAVOR_AUTH_URL` environment variable
-        and falls back to the url specified otherwise.
+        The base URL of the authentication server (for example,
+        ``https://auth.guidelight.dev``). If not provided, defaults to the value of the
+        ``ENDEAVOR_AUTH_URL`` environment variable or falls back to the url specified otherwise.
 
     timeout : float, optional
         The number of seconds to wait for a response until error.
@@ -116,7 +123,6 @@ class Client(object):
             "Accept": ACCEPT,
             "Accept-Language": ACCEPT_LANG,
             "Accept-Encoding": ACCEPT_ENCODE,
-            "Content-Type": CONTENT_TYPE,
             "User-Agent": user_agent,
         }
 
@@ -199,7 +205,7 @@ class Client(object):
         query: dict[str, Any] | None = None,
         require_authentication: bool = True,
         **options: Any,
-    ) -> dict:
+    ):
         return self._request(
             "GET",
             *endpoint,
@@ -215,7 +221,7 @@ class Client(object):
         query: dict[str, Any] | None = None,
         require_authentication: bool = True,
         **options: Any,
-    ) -> dict:
+    ):
         return self._request(
             "POST",
             *endpoint,
@@ -232,7 +238,7 @@ class Client(object):
         query: dict[str, Any] | None = None,
         require_authentication: bool = True,
         **options: Any,
-    ) -> dict:
+    ):
         return self._request(
             "PUT",
             *endpoint,
@@ -249,7 +255,7 @@ class Client(object):
         query: dict[str, Any] | None = None,
         require_authentication: bool = True,
         **options: Any,
-    ) -> dict:
+    ):
         return self._request(
             "PATCH",
             *endpoint,
@@ -265,7 +271,7 @@ class Client(object):
         query: dict[str, Any] | None = None,
         require_authentication: bool = True,
         **options: Any,
-    ) -> dict:
+    ):
         return self._request(
             "DELETE",
             *endpoint,
@@ -276,34 +282,39 @@ class Client(object):
 
     def execute(
         self,
-        agent: str,
-        task: str,
-        context: dict[str, Any] | None = None,
+        agent: str | None = None,
+        task: str | None = None,
+        context: Any | None = None,
         *,
+        deployed_task_url: str | URL | None = None,
         environment: str | None = None,
         version: str | None = None,
-        files: dict[str, Any] | None = None,
-    ) -> dict:
-        # this method executes a deployed task
-        query = {}
-        if environment is not None:
-            query["environment"] = environment
-        if version is not None:
-            query["version"] = version
+        files: Mapping[str, Any] | None = None,
+        raw: bool = False,
+        allow_cross_origin: bool = False,
+    ):
+        endpoint = self._make_execution_endpoint(
+            agent,
+            task,
+            deployed_task_url=deployed_task_url,
+            environment=environment,
+            version=version,
+            allow_cross_origin=allow_cross_origin,
+        )
+
+        files = files or None
 
         if files:
-            data = files
+            data = {"context": _serialize_context(context)}
         else:
-            data = context or {}
+            data = context if context is not None else {}
 
         return self._request(
             "POST",
-            agent,
-            task,
             data=data,
-            query=query,
             files=files,
-            execution=True,
+            resolved_url=endpoint,
+            raw=raw,
         )
 
     def handle(
@@ -311,18 +322,21 @@ class Client(object):
         rep: Response,
         *,
         stream: bool = False,
-    ) -> dict:
+        raw: bool = False,
+    ):
         """
         Handle the response from an API request, raising an error if the request failed.
         """
         if rep.status_code == 401 or rep.status_code == 403:
-            raise AuthenticationError("authentication failed")
+            raise AuthenticationError(
+                f"authentication failed: {_format_response_error(rep)}"
+            )
 
         elif rep.status_code == 204:
             return None
 
         elif 200 <= rep.status_code < 300:
-            if stream:
+            if stream or raw:
                 return rep
 
             mimetype, _ = parse_content_type(rep.headers.get("Content-Type"))
@@ -332,19 +346,12 @@ class Client(object):
                 return rep.content
 
         elif 400 <= rep.status_code < 500:
-            logger.warning(f"client error: {rep.status_code} {rep.content!r}")
-            message = f"{rep.status_code} response from {self.host}"
-
-            try:
-                err = rep.json()
-                if "error" in err:
-                    message = err["error"]
-                if "errors" in err:
-                    message += ":\n  " + "\n  ".join(
-                        [f"{e['field']}: {e['error']}" for e in err["errors"]]
-                    )
-            except JSONDecodeError:
-                pass
+            logger.warning(
+                "client error: status=%s reason=%s",
+                rep.status_code,
+                rep.reason or "<missing>",
+            )
+            message = _format_response_error(rep)
 
             if rep.status_code == 404:
                 raise NotFound(message)
@@ -352,20 +359,18 @@ class Client(object):
                 raise ClientError(message)
 
         elif 500 <= rep.status_code < 600:
-            logger.warning(f"server error: {rep.status_code} {rep.content!r}")
-            message = f"{rep.status_code} response from {self._host}"
+            logger.warning(
+                "server error: status=%s reason=%s",
+                rep.status_code,
+                rep.reason or "<missing>",
+            )
 
-            try:
-                err = rep.json()
-                if "error" in err:
-                    message = err["error"]
-            except JSONDecodeError:
-                pass
+            message = _format_response_error(rep)
 
             raise ServerError(message)
 
         else:
-            raise ValueError(f"unhandled status code {rep.status_code}")
+            raise ValueError(f"unhandled status code: {_format_response_error(rep)}")
 
     def is_authenticated(self) -> bool:
         """
@@ -414,48 +419,100 @@ class Client(object):
 
     def _make_execution_endpoint(
         self,
-        *endpoint: str,
-        query: dict[str, Any] | None = None,
+        agent: str | None = None,
+        task: str | None = None,
+        *,
+        deployed_task_url: str | URL | None = None,
+        environment: str | None = None,
+        version: str | None = None,
+        allow_cross_origin: bool = False,
     ) -> URL:
         # this method creates an endpoint to execute a deployed task
-        return self.url.resolve(
-            "/",
-            "api",
-            *endpoint,
-            query=query,
+        if not self.url:
+            raise ClientError("no Endeavor URL has been configured")
+
+        if deployed_task_url is not None:
+            ignored = [
+                name
+                for name, value in {
+                    "agent": agent,
+                    "task": task,
+                    "environment": environment,
+                    "version": version,
+                }.items()
+                if value is not None
+            ]
+
+            if ignored:
+                warnings.warn(
+                    f"{', '.join(ignored)} will be ignored because "
+                    "deployed_task_url was provided",
+                    UserWarning,
+                )
+
+            endpoint = (
+                deployed_task_url
+                if isinstance(deployed_task_url, URL)
+                else URL.parse(deployed_task_url)
+            )
+
+            endpoint_origin = _url_origin(endpoint)
+            configured_origin = _url_origin(self.url)
+
+            if not allow_cross_origin and endpoint_origin != configured_origin:
+                raise ValueError(
+                    "deployed_task_url must use the configured Endeavor origin"
+                )
+
+            return endpoint
+
+        if agent is None or task is None:
+            raise ValueError(
+                "agent and task are required when deployed_task_url is not provided"
+            )
+
+        parts: list[str] = []
+        if environment is not None:
+            parts.append(_validate_path_component(environment, "environment"))
+        parts.extend(
+            [
+                _validate_path_component(agent, "agent"),
+                _validate_path_component(task, "task"),
+            ]
         )
+        if version is not None:
+            parts.append(_validate_semver(version))
+        return self.url.resolve("/", "api", *parts)
 
     def _request(
         self,
         method: str,
         *endpoint: str,
-        data: dict[str, Any] | None = None,
+        data: Any | None = None,
         query: dict[str, Any] | None = None,
         extra_headers: dict[str, Any] | None = None,
-        files: dict[str, Any] | None = None,
+        files: Mapping[str, Any] | None = None,
         require_authentication: bool = True,
         stream: bool = False,
-        execution: bool = False,
-    ) -> dict:
+        resolved_url: URL | None = None,
+        raw: bool = False,
+    ) -> dict | Response | bytes | None:
         headers = self._pre_flight(
             require_authentication=require_authentication,
         )
         headers.update(extra_headers or {})
 
-        if execution:
-            url = self._make_execution_endpoint(
-                *endpoint,
-                query=query,
-            )
+        if resolved_url is not None:
+            url = resolved_url
         else:
             url = self._make_endpoint(
                 *endpoint,
                 query=query,
             )
 
+        files = files or None
+
         if files is not None:
-            # requests creates the multipart Content-Type and boundary.
-            headers.pop("Content-Type", None)
             rep = self.session.request(
                 method,
                 str(url),
@@ -475,7 +532,7 @@ class Client(object):
                 stream=stream,
             )
 
-        return self.handle(rep, stream=stream)
+        return self.handle(rep, stream=stream, raw=raw)
 
     def _pre_flight(self, require_authentication: bool = True) -> dict[str, str]:
         if not self.url:
