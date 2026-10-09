@@ -1,53 +1,35 @@
 """Shared types for high-level response models and request payloads."""
+
 from __future__ import annotations
 
-from datetime import datetime
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
-import ciso8601
+from pydantic import BaseModel, ConfigDict
 
 
-def parse_datetime(value: Any) -> datetime | None:
-    """Parse an Endeavor timestamp while accepting an absent value."""
-    if value is None or isinstance(value, datetime):
-        return value
-    if not isinstance(value, str):
-        raise TypeError(f"expected an ISO-8601 timestamp, got {type(value).__name__}")
-    return ciso8601.parse_datetime(value)
+class ResponseModel(BaseModel):
+    """A server response with preserved, inspectable unknown fields."""
 
-
-def serialize_value(value: Any) -> Any:
-    """Convert request objects and datetime values into JSON-compatible values."""
-    if hasattr(value, "to_dict"):
-        return value.to_dict()
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, list):
-        return [serialize_value(item) for item in value]
-    if isinstance(value, tuple):
-        return [serialize_value(item) for item in value]
-    if isinstance(value, dict):
-        return {key: serialize_value(item) for key, item in value.items()}
-    return value
-
-
-class ResponseModel:
-    """Base class for server responses.
-
-    Response models describe what the server returned. They intentionally do not
-    provide an implicit writable serialization path.
-    """
-
-    _extra: dict[str, Any]
+    model_config = ConfigDict(extra="allow")
 
     @classmethod
-    def _known_fields(cls) -> set[str]:
-        return set()
+    def from_dict(cls, data: dict[str, Any]) -> ResponseModel:
+        """Build a response model from an API response dictionary."""
+        return cls.model_validate(data)
 
-    @classmethod
-    def _extras(cls, data: dict[str, Any]) -> dict[str, Any]:
-        return {
-            key: value
-            for key, value in data.items()
-            if key not in cls._known_fields()
-        }
+    @property
+    def extra(self) -> Mapping[str, Any]:
+        """Return unknown response fields as a read-only mapping."""
+        return MappingProxyType(self.model_extra or {})
+
+
+class RequestModel(BaseModel):
+    """A strict, explicitly writable request body."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize writable fields for an API request body."""
+        return self.model_dump(mode="json", exclude_none=True)
