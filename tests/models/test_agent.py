@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
 
-from guidelight.models import Agent, AgentCreate, AgentUpdate, BAOInput
+import pytest
+from pydantic import ValidationError
+
+from guidelight import models as model_types
 
 
 def test_agent_response_parses_nested_readonly_fields():
-    agent = Agent.from_dict(
+    agent = model_types.Agent.from_dict(
         {
             "id": "01J7ABCDEF0123456789ABCDEFG",
             "created": "2026-09-16T12:00:00Z",
@@ -24,17 +27,30 @@ def test_agent_response_parses_nested_readonly_fields():
     assert agent.bao.objectives == "Reduce support time"
     assert agent.info.task_count == 2
     assert agent.usage == {"requests": 4}
-    assert agent._extra == {"new_server_field": True}
+    assert agent.extra == {"new_server_field": True}
+
+
+def test_response_extra_is_read_only():
+    agent = model_types.Agent.from_dict({"name": "Support Bot", "future": True})
+
+    with pytest.raises(TypeError):
+        agent.extra["another_field"] = True
 
 
 def test_agent_requests_only_serialize_writable_fields():
-    bao = BAOInput(objectives="Reduce support time", end_users=["customers"])
-    create = AgentCreate(
+    bao = model_types.BAOInput(
+        objectives="Reduce support time",
+        end_users=["customers"],
+    )
+    create = model_types.AgentCreate(
         name="Support Bot",
         description="Answers questions.",
         bao=bao,
     )
-    update = AgentUpdate(name="Updated Bot", description="Updated description.")
+    update = model_types.AgentUpdate(
+        name="Updated Bot",
+        description="Updated description.",
+    )
 
     assert create.to_dict() == {
         "name": "Support Bot",
@@ -48,3 +64,12 @@ def test_agent_requests_only_serialize_writable_fields():
         "name": "Updated Bot",
         "description": "Updated description.",
     }
+
+
+def test_agent_request_rejects_response_only_fields():
+    with pytest.raises(ValidationError):
+        model_types.AgentCreate(
+            name="Support Bot",
+            description="Answers questions.",
+            id="response-only",
+        )
