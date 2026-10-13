@@ -1,7 +1,8 @@
 from requests import Response
 
 from guidelight.endeavor import Endeavor
-from guidelight.resources import Agents
+from guidelight.resources import Agents, Generations, Releases
+from guidelight.resources import TestCases as CaseManager
 
 
 class FakeClient:
@@ -15,6 +16,9 @@ def test_endeavor_exposes_client_and_agents():
 
     assert endeavor.client is client
     assert isinstance(endeavor.agents, Agents)
+    assert isinstance(endeavor.test_cases, CaseManager)
+    assert isinstance(endeavor.generations, Generations)
+    assert isinstance(endeavor.releases, Releases)
     assert endeavor.status() == {"status": "ok"}
 
 
