@@ -30,12 +30,10 @@ from .shared import (
     METRIC_ID,
     RELEASE_ID,
     TASK_ID,
-    FakeClient,
 )
 
 
-def test_invalid_request_bodies_fail_before_request():
-    client = FakeClient()
+def test_invalid_request_bodies_fail_before_request(client):
     metrics = Agents(client).tasks("agent-1").metrics("task-1")
     releases = Releases(client)
     generations = Generations(client)
@@ -68,8 +66,8 @@ def test_invalid_request_bodies_fail_before_request():
     assert client.calls == []
 
 
-def test_supported_resource_filters_are_forwarded():
-    client = FakeClient(
+def test_supported_resource_filters_are_forwarded(client_factory):
+    client = client_factory(
         [
             {"page": {}, "testcases": []},
             {"page": {}, "experiments": []},
@@ -105,9 +103,8 @@ def test_unimplemented_agent_filters_are_rejected(
     manager_factory,
     filter_name,
     filter_value,
+    client,
 ):
-    client = FakeClient()
-
     with pytest.raises(
         TypeError,
         match=rf"unsupported filter\(s\): {filter_name}",
@@ -132,17 +129,15 @@ def test_unimplemented_agent_filters_are_rejected(
         lambda client: Releases(client).generations(RELEASE_ID),
     ],
 )
-def test_all_list_managers_reject_unsupported_filters(manager_factory):
-    client = FakeClient()
-
+def test_all_list_managers_reject_unsupported_filters(manager_factory, client):
     with pytest.raises(TypeError, match=r"unsupported filter\(s\): unknown"):
         manager_factory(client).list(unknown=True)
 
     assert client.calls == []
 
 
-def test_nonuniform_list_envelope_metadata_is_preserved():
-    client = FakeClient(
+def test_nonuniform_list_envelope_metadata_is_preserved(client_factory):
+    client = client_factory(
         [
             {
                 "page": {},
@@ -179,9 +174,7 @@ def test_nonuniform_list_envelope_metadata_is_preserved():
     }
 
 
-def test_ulid_only_routes_reject_slugs_before_request():
-    client = FakeClient()
-
+def test_ulid_only_routes_reject_slugs_before_request(client):
     with pytest.raises(ValueError):
         Releases(client).get("release-slug")
     with pytest.raises(ValueError):

@@ -1,10 +1,10 @@
 from guidelight.resources import Experiments
 
-from .shared import EXPERIMENT_ID, FakeClient, USER_ID
+from .shared import EXPERIMENT_ID, USER_ID
 
 
-def test_experiment_association_and_review_scope():
-    client = FakeClient(
+def test_experiment_association_and_review_scope(client_factory):
+    client = client_factory(
         [
             {"id": "experiment-1", "name": "Eval"},
             {"page": {}, "reviews": []},
@@ -34,8 +34,8 @@ def test_experiment_association_and_review_scope():
     assert client.calls[2][1] == ("reviews", "batch")
 
 
-def test_review_invite_normalizes_empty_created_response():
-    client = FakeClient([b""])
+def test_review_invite_normalizes_empty_created_response(client_factory):
+    client = client_factory([b""])
     reviews = Experiments(client).reviews(EXPERIMENT_ID)
 
     result = reviews.invite([USER_ID])
@@ -54,9 +54,7 @@ def test_review_invite_normalizes_empty_created_response():
     ]
 
 
-def test_review_delete_uses_review_route():
-    client = FakeClient()
-
+def test_review_delete_uses_review_route(client):
     Experiments(client).reviews(EXPERIMENT_ID).delete(USER_ID)
 
     assert client.calls == [

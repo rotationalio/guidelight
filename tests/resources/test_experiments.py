@@ -3,11 +3,11 @@ import pytest
 from guidelight.models import ExperimentCreate, ExperimentPatch
 from guidelight.resources import Experiments
 
-from .shared import EXPERIMENT_ID, FakeClient
+from .shared import EXPERIMENT_ID
 
 
-def test_experiment_list_uses_task_scoped_route():
-    client = FakeClient([{"page": {}, "experiments": []}])
+def test_experiment_list_uses_task_scoped_route(client_factory):
+    client = client_factory([{"page": {}, "experiments": []}])
 
     page = Experiments(client, task="task-1").list(page_size=10)
 
@@ -21,8 +21,7 @@ def test_experiment_list_uses_task_scoped_route():
     ]
 
 
-def test_unscoped_experiment_list_fails_before_request():
-    client = FakeClient()
+def test_unscoped_experiment_list_fails_before_request(client):
 
     with pytest.raises(
         ValueError,
@@ -33,8 +32,8 @@ def test_unscoped_experiment_list_fails_before_request():
     assert client.calls == []
 
 
-def test_experiment_create_decodes_unconfigured_draft_response():
-    client = FakeClient(
+def test_experiment_create_decodes_unconfigured_draft_response(client_factory):
+    client = client_factory(
         [
             {
                 "id": EXPERIMENT_ID,
@@ -68,8 +67,8 @@ def test_experiment_create_decodes_unconfigured_draft_response():
     ]
 
 
-def test_experiment_patch_validates_and_sends_partial_body():
-    client = FakeClient(
+def test_experiment_patch_validates_and_sends_partial_body(client_factory):
+    client = client_factory(
         [
             {
                 "id": EXPERIMENT_ID,
@@ -96,8 +95,7 @@ def test_experiment_patch_validates_and_sends_partial_body():
     ]
 
 
-def test_experiment_patch_rejects_unknown_fields_before_request():
-    client = FakeClient()
+def test_experiment_patch_rejects_unknown_fields_before_request(client):
 
     with pytest.raises(TypeError):
         Experiments(client).patch(
@@ -108,8 +106,8 @@ def test_experiment_patch_rejects_unknown_fields_before_request():
     assert client.calls == []
 
 
-def test_experiment_get_update_delete_and_set_test_cases_routes():
-    client = FakeClient(
+def test_experiment_get_update_delete_and_set_test_cases_routes(client_factory):
+    client = client_factory(
         [
             {"id": EXPERIMENT_ID, "name": "Evaluation"},
             {"id": EXPERIMENT_ID, "name": "Updated Evaluation"},

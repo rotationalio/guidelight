@@ -3,11 +3,8 @@ import pytest
 from guidelight.models import AgentCreate, AgentUpdate
 from guidelight.resources import Agents, PageInfo, reference
 
-from .shared import FakeClient
 
-
-def test_agents_list_decodes_page_and_metadata():
-    client = FakeClient()
+def test_agents_list_decodes_page_and_metadata(client):
     page = Agents(client).list(page_size=25, order_by=["name", "-created"])
 
     assert page.items[0].name == "Support Bot"
@@ -20,8 +17,7 @@ def test_agents_list_decodes_page_and_metadata():
     }
 
 
-def test_agents_crud_uses_explicit_paths_and_request_fields():
-    client = FakeClient()
+def test_agents_crud_uses_explicit_paths_and_request_fields(client):
     agents = Agents(client)
 
     agent = agents.get("support-bot")
@@ -41,8 +37,7 @@ def test_agents_crud_uses_explicit_paths_and_request_fields():
     )
 
 
-def test_agent_request_validation_fails_before_request():
-    client = FakeClient()
+def test_agent_request_validation_fails_before_request(client):
     agents = Agents(client)
     request = AgentCreate(
         name="Support Bot",
@@ -69,15 +64,13 @@ def test_agent_request_validation_fails_before_request():
     assert client.calls == []
 
 
-def test_agent_tasks_is_explicitly_scoped():
-    client = FakeClient()
+def test_agent_tasks_is_explicitly_scoped(client):
     tasks = Agents(client).tasks("support-bot")
 
     assert tasks.collection_path == ("agents", "support-bot", "tasks")
 
 
-def test_invalid_filters_and_references_fail_before_requests():
-    client = FakeClient()
+def test_invalid_filters_and_references_fail_before_requests(client):
     agents = Agents(client)
 
     with pytest.raises(TypeError):

@@ -5,7 +5,6 @@ from guidelight.resources import Comments, Generations, PageInfo
 
 from .shared import (
     EXPERIMENT_ID,
-    FakeClient,
     GENERATION_ID,
     METRIC_ID,
     RELEASE_ID,
@@ -14,14 +13,14 @@ from .shared import (
 )
 
 
-def test_generation_filter_and_scoped_comments():
-    client = FakeClient([{"page": {}, "generations": []}])
+def test_generation_filter_and_scoped_comments(client_factory):
+    client = client_factory([{"page": {}, "generations": []}])
     Generations(client).list(release_id=RELEASE_ID)
     assert client.calls[0][2]["release_id"] == RELEASE_ID
     with pytest.raises(ValueError):
         Generations(client).list(experiment_id="e", release_id="r")
 
-    client = FakeClient([{"id": "comment-1", "content": "Looks good"}])
+    client = client_factory([{"id": "comment-1", "content": "Looks good"}])
     Comments(client, "experiments", EXPERIMENT_ID).create(
         CommentCreate(content="Looks good")
     )
@@ -32,8 +31,8 @@ def test_generation_filter_and_scoped_comments():
     )
 
 
-def test_generation_get_and_delete_routes():
-    client = FakeClient([{"id": GENERATION_ID, "title": "Generation"}])
+def test_generation_get_and_delete_routes(client_factory):
+    client = client_factory([{"id": GENERATION_ID, "title": "Generation"}])
     generations = Generations(client)
 
     generation = generations.get(GENERATION_ID)
@@ -46,8 +45,8 @@ def test_generation_get_and_delete_routes():
     ]
 
 
-def test_generation_metrics_decodes_typed_page():
-    client = FakeClient(
+def test_generation_metrics_decodes_typed_page(client_factory):
+    client = client_factory(
         [
             {
                 "page": {"page_size": 25, "offset": 5},
@@ -72,8 +71,8 @@ def test_generation_metrics_decodes_typed_page():
     assert page.items[0].value == 0.75
 
 
-def test_generation_actions_use_generation_scope():
-    client = FakeClient(
+def test_generation_actions_use_generation_scope(client_factory):
+    client = client_factory(
         [
             {"success": True, "generation_id": GENERATION_ID},
             {"ok": True},
@@ -107,8 +106,8 @@ def test_generation_actions_use_generation_scope():
     )
 
 
-def test_generation_can_be_saved_as_a_task_associated_test_case():
-    client = FakeClient([{"id": TEST_CASE_ID, "title": "Saved Generation output"}])
+def test_generation_can_be_saved_as_a_task_associated_test_case(client_factory):
+    client = client_factory([{"id": TEST_CASE_ID, "title": "Saved Generation output"}])
 
     test_case = Generations(client).create_test_case(
         GENERATION_ID,

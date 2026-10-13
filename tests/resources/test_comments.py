@@ -4,13 +4,12 @@ from .shared import (
     COMMENT_ID_1,
     COMMENT_ID_2,
     EXPERIMENT_ID,
-    FakeClient,
     GENERATION_ID,
 )
 
 
-def test_comment_update_delete_for_experiment_and_generation_parents():
-    client = FakeClient(
+def test_comment_update_delete_for_experiment_and_generation_parents(client_factory):
+    client = client_factory(
         [
             {
                 "id": COMMENT_ID_1,

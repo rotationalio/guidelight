@@ -258,3 +258,5 @@ failures so one error does not prevent later resources from being considered.
 Also list Release-associated Generations with
 `releases.generations(release.id)` before deleting the Release.
 
+**NOTE:** It is possible to delete an agent without deleting all of its associated resources as long as there are no deployed tasks. This is a convenience function for users, but the above is the recommended approach.
+

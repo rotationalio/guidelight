@@ -6,19 +6,18 @@ from guidelight.resources import Releases
 
 from .shared import (
     EXPERIMENT_ID,
-    FakeClient,
     GENERATION_ID,
     RELEASE_ID,
     TASK_ID,
 )
 
 
-def test_release_create_and_clone_preserve_all_releases():
+def test_release_create_and_clone_preserve_all_releases(client_factory):
     responses = [
         {"releases": [{"id": "release-1"}, {"id": "release-2"}]},
         {"releases": [{"id": "clone-1"}, {"id": "clone-2"}]},
     ]
-    client = FakeClient(responses)
+    client = client_factory(responses)
     releases = Releases(client)
     created = releases.create(
         ReleaseCreate(
@@ -43,8 +42,12 @@ def test_release_create_and_clone_preserve_all_releases():
     ],
     ids=["missing-releases", "non-list-releases", "non-object-entry"],
 )
-def test_release_multi_result_actions_reject_malformed_envelopes(action, body):
-    client = FakeClient([body])
+def test_release_multi_result_actions_reject_malformed_envelopes(
+    action,
+    body,
+    client_factory,
+):
+    client = client_factory([body])
     releases = Releases(client)
 
     with pytest.raises(TypeError):
@@ -62,8 +65,8 @@ def test_release_multi_result_actions_reject_malformed_envelopes(action, body):
     assert len(client.calls) == 1
 
 
-def test_release_lifecycle_uses_documented_action_paths():
-    client = FakeClient(
+def test_release_lifecycle_uses_documented_action_paths(client_factory):
+    client = client_factory(
         [
             {"id": "release-1", "is_deployed": True},
             {"id": "release-1", "is_retired": True},
@@ -80,8 +83,8 @@ def test_release_lifecycle_uses_documented_action_paths():
     assert result.output_text == "ok"
 
 
-def test_task_scoped_release_create_and_release_generation_list():
-    client = FakeClient(
+def test_task_scoped_release_create_and_release_generation_list(client_factory):
+    client = client_factory(
         [
             {"releases": [{"id": RELEASE_ID, "task_id": TASK_ID}]},
             {

@@ -2,11 +2,11 @@ from guidelight.models import TaskCreate
 from guidelight.resources import Agents, PageInfo
 from guidelight.resources.testcases import TestCases as CaseManager
 
-from .shared import FakeClient, TASK_ID
+from .shared import TASK_ID
 
 
-def test_task_creation_is_agent_scoped():
-    client = FakeClient([{"id": "task-1", "name": "Summarize"}])
+def test_task_creation_is_agent_scoped(client_factory):
+    client = client_factory([{"id": "task-1", "name": "Summarize"}])
     Agents(client).tasks("agent-1").create(
         TaskCreate(name="Summarize", description="Summarize text.")
     )
@@ -16,8 +16,8 @@ def test_task_creation_is_agent_scoped():
     )
 
 
-def test_task_list_get_update_and_delete_routes():
-    client = FakeClient(
+def test_task_list_get_update_and_delete_routes(client_factory):
+    client = client_factory(
         [
             {"page": {"page_size": 10, "offset": 0}, "tasks": []},
             {"id": TASK_ID, "name": "Summarize"},
@@ -58,8 +58,8 @@ def test_task_list_get_update_and_delete_routes():
     ]
 
 
-def test_task_crud_accepts_slug_references():
-    client = FakeClient(
+def test_task_crud_accepts_slug_references(client_factory):
+    client = client_factory(
         [
             {"id": TASK_ID, "name": "Summarize", "slug": "summarize"},
             {"id": TASK_ID, "name": "Updated", "slug": "summarize"},
@@ -92,8 +92,8 @@ def test_task_crud_accepts_slug_references():
     ]
 
 
-def test_parent_scoped_experiment_metric_and_test_case_routes():
-    client = FakeClient(
+def test_parent_scoped_experiment_metric_and_test_case_routes(client_factory):
+    client = client_factory(
         [
             {"id": "experiment-1", "name": "Eval"},
             {"id": "metric-1", "name": "Correctness"},

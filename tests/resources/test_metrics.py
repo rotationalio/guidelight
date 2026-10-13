@@ -1,10 +1,10 @@
 from guidelight.resources import Agents
 
-from .shared import FakeClient, METRIC_ID, TASK_ID
+from .shared import METRIC_ID, TASK_ID
 
 
-def test_metric_list_get_update_and_delete_routes():
-    client = FakeClient(
+def test_metric_list_get_update_and_delete_routes(client_factory):
+    client = client_factory(
         [
             {
                 "page": {},

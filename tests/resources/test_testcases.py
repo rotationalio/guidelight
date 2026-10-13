@@ -5,20 +5,20 @@ from guidelight.resources.testcases import (
     TestCaseVersions as CaseVersionManager,
 )
 
-from .shared import FakeClient, GENERATION_ID, TEST_CASE_ID
+from .shared import GENERATION_ID, TEST_CASE_ID
 
 
-def test_test_case_parent_selection_is_exclusive():
+def test_test_case_parent_selection_is_exclusive(client):
     with pytest.raises(ValueError):
         CaseManager(
-            FakeClient(),
+            client,
             task="task-1",
             experiment="experiment-1",
         )
 
 
-def test_test_case_crud_golden_and_version_routes():
-    client = FakeClient(
+def test_test_case_crud_golden_and_version_routes(client_factory):
+    client = client_factory(
         [
             {"id": TEST_CASE_ID, "title": "Greeting"},
             {"id": TEST_CASE_ID, "title": "Updated Greeting"},
@@ -84,8 +84,8 @@ def test_test_case_crud_golden_and_version_routes():
     ]
 
 
-def test_set_golden_refreshes_test_case_after_empty_response():
-    client = FakeClient(
+def test_set_golden_refreshes_test_case_after_empty_response(client_factory):
+    client = client_factory(
         [
             None,
             {
@@ -110,9 +110,9 @@ def test_set_golden_refreshes_test_case_after_empty_response():
     ]
 
 
-def test_test_case_versions_require_a_test_case_ulid():
+def test_test_case_versions_require_a_test_case_ulid(client):
     with pytest.raises(ValueError):
         CaseVersionManager(
-            FakeClient(),
+            client,
             "test-case-slug",
         )
