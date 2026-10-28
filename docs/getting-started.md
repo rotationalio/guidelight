@@ -66,8 +66,9 @@ for agent in page:
 ```
 
 The returned `Endeavor` object exposes typed managers for Agents, global Test
-Cases, Generations, and Releases. Child managers are reached from their
-parents; see [Core concepts](concepts.md#manager-scope).
+Cases, Generations, Releases, Environments, Providers, Models, Governance
+Policies. Child managers are reached from their parents; see
+[Core concepts](concepts.md#manager-scope).
 
 `endeavor.status()` checks server status. It is a network call even though the
 status endpoint itself does not require authentication.

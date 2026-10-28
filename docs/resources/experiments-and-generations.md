@@ -154,44 +154,36 @@ are produced by Experiment execution or deployed Release execution.
 - `iterate(**options)` yields Generations across list pages.
 - `get(ref) -> Generation` gets one.
 - `delete(ref) -> None` deletes one.
-- `metrics(ref) -> Page[Metric]` reads its Metric result values.
-- `feedback(ref, request=None, **fields) -> GenerationFeedbackResponse`
-  submits scores.
 - `set_golden(ref, test_case_ids: list[str])` associates golden-example Test
   Cases and returns the low-level response.
 - `create_test_case(ref, request=None, **fields) -> TestCase` saves a
   Generation's output or input as a new Test Case associated with one or more
   Tasks.
-- `comments(ref) -> Comments` returns its Comment manager.
 
 `list()` and `iterate()` support `page_size`, `offset`, and `order_by`.
 `experiment_id` and `release_id` are the only resource-specific filters.
 Every method addressing one Generation requires its ULID; slugs fail local
-validation. Body values such as filter IDs, Metric IDs in `scores`, and Test
-Case IDs in `set_golden()` are sent without local ULID-format validation.
+validation. Body values such as filter IDs and Test Case IDs in
+`set_golden()` are sent without local ULID-format validation.
 
 `Generation` includes IDs for its Experiment, Release, previous, and next
 Generation; title, error, context, rendered prompt, modalities, output text,
 timing, invocation/tool-call counts, token and cost data, attachments, and
-golden-example Test Cases. `GenerationFeedback` requires a nonempty
-`scores: dict[str, float]` and optionally accepts `generation_id`.
-`GenerationFeedbackResponse` includes success, Generation and Review IDs,
-status, completion counts, and accepted scores.
-`GenerationTestCaseCreate` requires at least one Task ID, optionally accepts a
-Test Case name, and uses `from_input=False` by default. Experiment Generations
-must use their output because Endeavor rejects `from_input=True` for them.
+golden-example Test Cases. `GenerationTestCaseCreate` requires at least one
+Task ID, optionally accepts a Test Case name, and uses `from_input=False` by
+default. Experiment Generations must use their output because Endeavor rejects
+`from_input=True` for them.
+
+Reviewer-specific Generation Metrics, feedback, and Generation Comments are
+not exposed by Guidelight. Their Endeavor routes require user-subject claims,
+which the SDK's API-key authentication does not provide.
 
 ```python
-from guidelight.models import GenerationFeedback, GenerationTestCaseCreate
+from guidelight.models import GenerationTestCaseCreate
 
 page = generations.list(experiment_id=experiment.id, page_size=100)
 generation = page.items[0]
 
-metric_values = generations.metrics(generation.id)
-feedback = generations.feedback(
-    generation.id,
-    GenerationFeedback(scores={metric.id: 0.9}),
-)
 generations.set_golden(generation.id, [test_case.id])
 saved_test_case = generations.create_test_case(
     generation.id,
@@ -200,12 +192,11 @@ saved_test_case = generations.create_test_case(
         name="Representative output",
     ),
 )
-generation_comments = generations.comments(generation.id)
 ```
 
-Delete Generation Comments first. Remove golden-output and golden-example
-relationships involving the Generation before deletion. Delete Generations
-before their Experiment and Release parents.
+Remove golden-output and golden-example relationships involving the Generation
+before deletion. Delete Generations before their Experiment and Release
+parents.
 
 ```python
 generations.delete(generation.id)

@@ -3,9 +3,10 @@
 [Resource index](README.md) · [Core concepts](../concepts.md) ·
 [Lifecycle](../lifecycle.md)
 
-Comments annotate one Experiment or Generation. Reviews belong to one
+Comments exposed by Guidelight annotate an Experiment. Reviews belong to one
 Experiment and track an invited user's evaluation progress. Neither resource
-has a global collection manager.
+has a global collection manager. Generation Comments require user-subject
+claims and are not exposed by the API-key-authenticated SDK.
 
 ## Comments
 
@@ -13,12 +14,10 @@ Obtain a parent-scoped manager:
 
 ```python
 experiment_comments = experiments.comments(experiment.id)
-generation_comments = endeavor.generations.comments(generation.id)
 ```
 
-A `Comments` manager is permanently scoped to exactly one supported parent.
-Both parent constructors require a strict ULID; Experiment or Generation
-slugs fail local validation.
+A `Comments` manager is permanently scoped to one Experiment. Its parent
+constructor requires a strict ULID; Experiment slugs fail local validation.
 
 ### Manager API
 
@@ -64,8 +63,7 @@ experiment_comments.delete(comment.id)
 ```
 
 Delete replies before their parent Comment when the service does not cascade
-them. Delete all Generation Comments before deleting that Generation, and all
-Experiment Comments before deleting that Experiment.
+them. Delete all Experiment Comments before deleting that Experiment.
 
 ## Reviews
 
@@ -76,29 +74,22 @@ reviews = experiments.reviews(experiment.id)
 ```
 
 The parent Experiment reference must be a strict ULID. Reviews have no
-ordinary `create`, `get`, or `update` operation; invitations create the
-review work represented by later list results.
+ordinary `create`, `get`, or `update` operation. Reviewer invitations require
+user-subject claims and are not exposed by the API-key-authenticated SDK.
 
 ### Manager API
 
 - `list(**options) -> Page[Review]` lists Reviews under the Experiment.
 - `iterate(**options)` yields the Experiment's Reviews across list pages.
-- `invite(reviewer_ids: list[str]) -> None` sends a batch invitation.
 - `delete(ref) -> None` deletes a Review by strict Review ULID.
 
 `list()` and `iterate()` accept `page_size`, `offset`, and `order_by`; there
-are no Review-specific filters. `invite()` builds an `InviteReviewers`
-request containing the scoped `experiment_id` and a nonempty `reviewers`
-list. Reviewer IDs are sent as supplied and are not ULID-format-validated
-locally.
+are no Review-specific filters.
 
 `Review` includes `id`, timestamps, `experiment_id`, `user_id`, status and
 user data, completed and total counts, percent, and a progress string.
 
 ```python
-result = reviews.invite(["<reviewer-user-ulid>"])
-assert result is None  # invite intentionally returns None
-
 for review in reviews.list():
     print(review.user_id, review.percent, review.status)
     reviews.delete(review.id)

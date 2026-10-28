@@ -1,7 +1,17 @@
 from requests import Response
 
+import guidelight.models as model_exports
+import guidelight.resources as resource_exports
 from guidelight.endeavor import Endeavor
-from guidelight.resources import Agents, Generations, Releases
+from guidelight.resources import (
+    Agents,
+    Environments,
+    Generations,
+    GovernancePolicies,
+    Models,
+    Providers,
+    Releases,
+)
 from guidelight.resources import TestCases as CaseManager
 
 
@@ -10,16 +20,61 @@ class FakeClient:
         return {"status": "ok"}
 
 
-def test_endeavor_exposes_client_and_agents():
+def test_endeavor_exposes_client_and_resource_managers():
+    """The high-level entry point exposes every implemented resource manager."""
     client = FakeClient()
     endeavor = Endeavor(client)
+    expected_managers = {
+        "agents": Agents,
+        "environments": Environments,
+        "generations": Generations,
+        "governance_policies": GovernancePolicies,
+        "models": Models,
+        "providers": Providers,
+        "releases": Releases,
+        "test_cases": CaseManager,
+    }
 
     assert endeavor.client is client
-    assert isinstance(endeavor.agents, Agents)
-    assert isinstance(endeavor.test_cases, CaseManager)
-    assert isinstance(endeavor.generations, Generations)
-    assert isinstance(endeavor.releases, Releases)
+    for attribute, manager_type in expected_managers.items():
+        assert isinstance(getattr(endeavor, attribute), manager_type)
     assert endeavor.status() == {"status": "ok"}
+
+
+def test_configuration_models_and_resources_are_publicly_exported():
+    """Public modules export all configuration types and managers."""
+    expected_models = {
+        "Environment",
+        "EnvironmentCreate",
+        "EnvironmentPatch",
+        "EnvironmentUpdate",
+        "GovernancePolicy",
+        "GovernancePolicyCreate",
+        "GovernancePolicyPatch",
+        "Model",
+        "ModelUsage",
+        "Provider",
+        "ProviderCreate",
+        "ProviderCredential",
+        "ProviderCredentialCreate",
+        "ProviderCredentialPatch",
+        "ProviderCredentialUpdate",
+        "ProviderPatch",
+        "ProviderStatusResponse",
+        "ProviderUpdate",
+    }
+    expected_resources = {
+        "Environments",
+        "GovernancePolicies",
+        "Models",
+        "ProviderCredentials",
+        "Providers",
+    }
+
+    assert expected_models <= set(model_exports.__all__)
+    assert expected_resources <= set(resource_exports.__all__)
+    assert all(hasattr(model_exports, name) for name in expected_models)
+    assert all(hasattr(resource_exports, name) for name in expected_resources)
 
 
 def test_endeavor_run_delegates_to_client():

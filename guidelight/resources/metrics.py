@@ -2,14 +2,14 @@ from __future__ import annotations
 from ..models import Metric, MetricCreate, MetricUpdate
 from .base import (
     Page,
-    ResourceManager,
+    CollectionManager,
     decode_page,
     request_object,
     resolve_resource_ref,
 )
 
 
-class Metrics(ResourceManager):
+class Metrics(CollectionManager[Metric]):
     """Manager for Metrics scoped to one Task."""
 
     def __init__(self, client, task):
@@ -29,6 +29,10 @@ class Metrics(ResourceManager):
             key="metrics",
             model=Metric,
         )
+
+    def __iter__(self):
+        """Iterate over Metrics using default list options."""
+        return self.iterate()
 
     def create(self, request=None, **fields) -> Metric:
         """Create a Metric under the configured Task."""

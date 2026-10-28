@@ -22,7 +22,6 @@ flowchart TD
     ENV[Environment]
     MODEL[Model]
     EC[Experiment Comment]
-    GC[Generation Comment]
     RV[Review]
 
     SDK -->|manages| A
@@ -41,8 +40,6 @@ flowchart TD
     R -->|promotes| X
     R -->|targets| ENV
     R -->|deployed execution produces| G
-    G -->|may be scored with| M
-    G -->|has| GC
     G -.->|may be a golden output for| TC
 ```
 
@@ -71,6 +68,10 @@ endeavor.agents
 endeavor.test_cases
 endeavor.generations
 endeavor.releases
+endeavor.environments
+endeavor.providers
+endeavor.models
+endeavor.governance_policies
 ```
 
 Managers for owned resources are obtained from their parent:
@@ -84,8 +85,16 @@ task_releases = tasks.releases(task)
 
 experiment_comments = experiments.comments(experiment.id)
 experiment_reviews = experiments.reviews(experiment.id)
-generation_comments = endeavor.generations.comments(generation.id)
 release_generations = endeavor.releases.generations(release.id)
+```
+
+Provider-owned managers preserve the provider scope:
+
+```python
+provider = endeavor.providers.get(provider_id)
+credentials = endeavor.providers.credentials(provider)
+provider_models = endeavor.providers.models(provider)
+provider_policies = endeavor.providers.governance(provider)
 ```
 
 Scope affects available routes:
@@ -99,8 +108,23 @@ Scope affects available routes:
   the global collection. Include `task_id` or `experiment_id` in
   `TestCaseCreate` to establish the relationship.
 
-Every manager exposes its authenticated low-level `client` and an `iterate()`
-helper that follows offset-based pages.
+Every manager exposes its authenticated low-level `client`. Collection
+managers expose an `iterate()` helper that follows offset-based pages.
+Managers whose default `list()` call is valid also support Python iteration:
+
+```python
+for environment in endeavor.environments:
+    print(environment.name)
+```
+
+Use explicit `iterate(**options)` when filters, a page size, or a nonzero
+offset is required. Experiments require a Task-scoped manager and therefore
+use explicit `iterate()`. `TestCaseVersions` is not a collection manager
+because Endeavor exposes only version-specific `get()` and `delete()` routes.
+
+Models are read-only catalog resources. Environments, Providers, Credentials,
+and Governance Policies are configuration resources with typed request models
+and route-specific filters. Integrations are not exposed by this SDK version.
 
 ## Slugs and ULIDs
 
@@ -117,7 +141,7 @@ Slug or ULID references are accepted for:
 A ULID is required for:
 
 - Test Case, Test Case Version, and golden-output routes
-- Generation, feedback, Generation Metric, and Generation Comment routes
+- Generation routes
 - every route that addresses one Release
 - Comment and Review parents and resources
 - Experiment Test Case associations, Comments, and Reviews

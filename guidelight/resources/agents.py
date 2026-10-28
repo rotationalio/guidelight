@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..models.agent import Agent, AgentCreate, AgentUpdate
-from .base import Page, ResourceManager, decode_page, reference, request_object
+from .base import Page, CollectionManager, decode_page, reference, request_object
 from .tasks import Tasks
 
 
@@ -23,7 +23,7 @@ class AgentTasks(Tasks):
         return ("agents", self.agent_reference, "tasks")
 
 
-class Agents(ResourceManager):
+class Agents(CollectionManager[Agent]):
     """High-level manager for the Agent resource."""
 
     collection_path = ("agents",)
@@ -46,6 +46,10 @@ class Agents(ResourceManager):
         )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="agents", model=Agent)
+
+    def __iter__(self):
+        """Iterate over Agents using default list options."""
+        return self.iterate()
 
     def get(self, ref: Any) -> Agent:
         """Retrieve an Agent by ID or supported slug."""

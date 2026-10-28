@@ -5,9 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
-
-from .base import RequestModel, ResponseModel
+from .base import ResponseModel
 
 
 class Review(ResponseModel):
@@ -24,10 +22,3 @@ class Review(ResponseModel):
     total: int = 0
     percent: float = 0.0
     progress: str = ""
-
-
-class InviteReviewers(RequestModel):
-    """Reviewer identifiers submitted for an Experiment review."""
-
-    experiment_id: str
-    reviewers: list[str] = Field(min_length=1)

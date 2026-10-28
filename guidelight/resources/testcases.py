@@ -4,6 +4,7 @@ from typing import Any
 from ..models import TestCase, TestCaseCreate, TestCaseUpdate, TestCaseVersion
 from .base import (
     Page,
+    CollectionManager,
     ResourceManager,
     decode_page,
     request_object,
@@ -12,7 +13,7 @@ from .base import (
 )
 
 
-class TestCases(ResourceManager):
+class TestCases(CollectionManager[TestCase]):
     """Manager for the Test Case resource."""
 
     collection_path = ("testcases",)
@@ -50,6 +51,10 @@ class TestCases(ResourceManager):
         path = self.parent + ("testcases",) if self.parent else self.collection_path
         body = self.client.get(*path, query=query)
         return decode_page(body, key="testcases", model=TestCase)
+
+    def __iter__(self):
+        """Iterate over Test Cases using default list options."""
+        return self.iterate()
 
     def get(self, ref: Any) -> TestCase:
         """Retrieve a Test Case by ID or supported reference."""

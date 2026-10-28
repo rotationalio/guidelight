@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ..models import InviteReviewers, Review
-from .base import Page, ResourceManager, decode_page, reference
+from ..models import Review
+from .base import CollectionManager, Page, decode_page, reference
 
 
-class Reviews(ResourceManager):
+class Reviews(CollectionManager[Review]):
     """Manager for reviews scoped to one Experiment."""
 
     def __init__(self, client, experiment):
@@ -22,13 +22,9 @@ class Reviews(ResourceManager):
         )
         return decode_page(body, key="reviews", model=Review)
 
-    def invite(self, reviewer_ids: list[str]) -> None:
-        """Invite reviewers to the configured Experiment."""
-        request = InviteReviewers(
-            experiment_id=self.experiment,
-            reviewers=reviewer_ids,
-        )
-        self.client.post(request.to_dict(), "reviews", "batch")
+    def __iter__(self):
+        """Iterate over Reviews using default list options."""
+        return self.iterate()
 
     def delete(self, ref) -> None:
         """Delete a review by ID or supported reference."""

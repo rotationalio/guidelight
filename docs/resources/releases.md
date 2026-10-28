@@ -147,10 +147,9 @@ filters. The same data can be selected globally with
 
 ## Deletion dependencies
 
-Delete Release-associated Generation Comments and Generations first. Retire a
-deployed Release before deleting it. Delete all clones separately; deleting
-the source does not manage their lifecycle. Delete Releases before their
-Experiment and Task.
+Delete Release-associated Generations first. Retire a deployed Release before
+deleting it. Delete all clones separately; deleting the source does not manage
+their lifecycle. Delete Releases before their Experiment and Task.
 
 ```python
 for generation in release_generations.list():

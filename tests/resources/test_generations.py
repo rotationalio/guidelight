@@ -1,34 +1,21 @@
 import pytest
 
-from guidelight.models import CommentCreate, Metric
-from guidelight.resources import Comments, Generations, PageInfo
+from guidelight.resources import Generations
 
 from .shared import (
-    EXPERIMENT_ID,
     GENERATION_ID,
-    METRIC_ID,
     RELEASE_ID,
     TASK_ID,
     TEST_CASE_ID,
 )
 
 
-def test_generation_filter_and_scoped_comments(client_factory):
+def test_generation_filters_are_forwarded_and_mutually_exclusive(client_factory):
     client = client_factory([{"page": {}, "generations": []}])
     Generations(client).list(release_id=RELEASE_ID)
     assert client.calls[0][2]["release_id"] == RELEASE_ID
     with pytest.raises(ValueError):
         Generations(client).list(experiment_id="e", release_id="r")
-
-    client = client_factory([{"id": "comment-1", "content": "Looks good"}])
-    Comments(client, "experiments", EXPERIMENT_ID).create(
-        CommentCreate(content="Looks good")
-    )
-    assert client.calls[0][1] == (
-        "experiments",
-        EXPERIMENT_ID,
-        "comments",
-    )
 
 
 def test_generation_get_and_delete_routes(client_factory):
@@ -45,64 +32,25 @@ def test_generation_get_and_delete_routes(client_factory):
     ]
 
 
-def test_generation_metrics_decodes_typed_page(client_factory):
-    client = client_factory(
-        [
-            {
-                "page": {"page_size": 25, "offset": 5},
-                "metrics": [
-                    {
-                        "id": METRIC_ID,
-                        "name": "Correctness",
-                        "value": 0.75,
-                    },
-                ],
-            },
-        ]
-    )
-
-    page = Generations(client).metrics(GENERATION_ID)
-
-    assert client.calls == [
-        ("GET", ("generations", GENERATION_ID, "metrics"), None),
-    ]
-    assert page.page_info == PageInfo(page_size=25, offset=5)
-    assert isinstance(page.items[0], Metric)
-    assert page.items[0].value == 0.75
+@pytest.mark.parametrize("method_name", ["metrics", "feedback", "comments"])
+def test_generation_manager_does_not_expose_user_claim_operations(
+    client,
+    method_name,
+):
+    """API-key-authenticated managers omit routes that require user claims."""
+    assert not hasattr(Generations(client), method_name)
 
 
-def test_generation_actions_use_generation_scope(client_factory):
-    client = client_factory(
-        [
-            {"success": True, "generation_id": GENERATION_ID},
-            {"ok": True},
-            {"page": {}, "comments": []},
-        ]
-    )
+def test_generation_set_golden_uses_generation_scope(client_factory):
+    client = client_factory([{"ok": True}])
     generations = Generations(client)
 
-    feedback = generations.feedback(
-        GENERATION_ID,
-        scores={METRIC_ID: 1.0},
-    )
     generations.set_golden(GENERATION_ID, [TEST_CASE_ID])
-    generations.comments(GENERATION_ID).list()
 
-    assert feedback.generation_id == GENERATION_ID
     assert client.calls[0][1] == (
         "generations",
         GENERATION_ID,
-        "feedback",
-    )
-    assert client.calls[1][1] == (
-        "generations",
-        GENERATION_ID,
         "golden",
-    )
-    assert client.calls[2][1] == (
-        "generations",
-        GENERATION_ID,
-        "comments",
     )
 
 

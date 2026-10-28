@@ -5,7 +5,7 @@ from typing import Any
 from ..models import Experiment, ExperimentCreate, ExperimentPatch, ExperimentUpdate
 from .base import (
     Page,
-    ResourceManager,
+    CollectionManager,
     decode_page,
     reference,
     request_object,
@@ -16,7 +16,7 @@ from .reviews import Reviews
 from .testcases import TestCases
 
 
-class Experiments(ResourceManager):
+class Experiments(CollectionManager[Experiment]):
     """Manager for the Experiment resource."""
 
     collection_path = ("experiments",)

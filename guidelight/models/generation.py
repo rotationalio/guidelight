@@ -44,28 +44,9 @@ class Generation(ResponseModel):
     examples: list[TestCase] = Field(default_factory=list)
 
 
-class GenerationFeedback(RequestModel):
-    """Scores submitted as feedback for a Generation."""
-
-    scores: dict[str, float] = Field(min_length=1)
-    generation_id: str | None = None
-
-
 class GenerationTestCaseCreate(RequestModel):
     """Fields accepted when saving a Generation as a new Test Case."""
 
     task_ids: list[str] = Field(min_length=1)
     name: str | None = None
     from_input: bool = False
-
-
-class GenerationFeedbackResponse(ResponseModel):
-    """The result returned after submitting Generation feedback."""
-
-    success: bool = False
-    generation_id: str | None = None
-    review_id: str | None = None
-    status: str = ""
-    completed: int = 0
-    total: int = 0
-    scores: dict[str, float] = Field(default_factory=dict)

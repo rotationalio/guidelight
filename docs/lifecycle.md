@@ -10,6 +10,40 @@ placeholders and names before using them with an Endeavor service.
 Before starting, obtain the IDs of an existing Model and Environment. An
 optional Provider is needed only for provider-specific Release metadata.
 
+These configuration resources are available directly from `Endeavor`:
+
+```python
+models = endeavor.models
+environments = endeavor.environments
+providers = endeavor.providers
+policies = endeavor.governance_policies
+```
+
+Models are read-only. Use the other managers only when the workflow needs to
+create or change configuration. See the [configuration resource
+guides](resources/README.md#resources) for their filters, scopes, and request
+models.
+
+Credentials, provider catalog Models, and provider Governance Policies are
+accessed through a specific Provider rather than directly from `Endeavor`:
+
+```python
+provider = endeavor.providers.get("<provider-ulid-or-slug>")
+
+credentials = endeavor.providers.credentials(provider)
+provider_models = endeavor.providers.models(provider)
+provider_policies = endeavor.providers.governance(provider)
+```
+
+Credential operations remain scoped to that Provider. Provider-scoped Models
+and Governance Policies are read-only collections; global governance policy
+mutations use `endeavor.governance_policies`.
+
+Provider actions are operational calls.
+`test_connectivity()` can contact the external model service,
+`refresh_catalog()` can contact that service and update Endeavor's cached
+catalog, and `update_status()` changes server-managed Provider state.
+
 ## 1. Create an Agent and Task
 
 ```python
@@ -158,9 +192,10 @@ for generation in generation_page:
     print(generation.id)
 ```
 
-Generations have no create or ordinary update operation. Their action methods
-support feedback, golden-example associations, Metrics, and Comments. See
-[Core concepts](concepts.md#resource-graph) for those relationships.
+Generations have no create or ordinary update operation. Their exposed action
+methods support golden-example associations and saving outputs as Test Cases.
+Reviewer-specific Metrics, feedback, and Comments require user-subject claims
+and are not exposed by the API-key-authenticated SDK.
 
 ## 6. Create and deploy a Release
 
@@ -227,15 +262,14 @@ for files, complete URLs, origin restrictions, and response decoding.
 
 Remove dependents before parents. A comprehensive cleanup follows this order:
 
-1. Generation Comments.
-2. Experiment Comments and Reviews.
-3. Generations created by Experiments or deployed Releases.
-4. Retire deployed Releases, then delete Releases.
-5. Delete Experiments.
-6. Delete Metrics, if created.
-7. Delete Test Cases or individual Test Case Versions.
-8. Delete Tasks.
-9. Delete the Agent last.
+1. Experiment Comments and Reviews.
+2. Generations created by Experiments or deployed Releases.
+3. Retire deployed Releases, then delete Releases.
+4. Delete Experiments.
+5. Delete Metrics, if created.
+6. Delete Test Cases or individual Test Case Versions.
+7. Delete Tasks.
+8. Delete the Agent last.
 
 For the minimal resources above, which did not create Comments or Reviews:
 

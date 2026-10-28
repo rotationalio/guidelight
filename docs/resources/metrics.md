@@ -68,16 +68,11 @@ metric = metrics.update(
         step=0.05,
     ),
 )
-
-values = endeavor.generations.metrics(generation.id)
-feedback = endeavor.generations.feedback(
-    generation.id,
-    scores={metric.id: 0.95},
-)
 ```
 
-There are no Metric-specific action methods. Feedback submission is a
-Generation action and returns `GenerationFeedbackResponse`.
+There are no Metric-specific action methods. Reviewer-specific Generation
+Metric values and feedback are not exposed by Guidelight because those
+Endeavor routes require user-subject claims.
 
 ## Deletion dependencies
 
