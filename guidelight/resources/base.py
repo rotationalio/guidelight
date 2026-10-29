@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import re
-from typing import Any, Generic, Iterable, TypeVar
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass, field
+from typing import Any, Generic, TypeVar
 
 from pydantic import ValidationError
 
@@ -27,7 +28,7 @@ class PageInfo:
     offset: int = 0
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any] | None) -> "PageInfo":
+    def from_dict(cls, data: dict[str, Any] | None) -> PageInfo:
         """Build pagination metadata from an optional response envelope."""
         data = data or {}
         return cls(
@@ -120,23 +121,34 @@ def decode_page(
     key: str,
     model: type[T],
 ) -> Page[T]:
-    """Decode a standard Endeavor collection envelope into a typed page."""
+    """Decode a collection response and reject malformed envelopes."""
     if isinstance(body, list):
         values = body
+        page_data = None
         metadata: dict[str, Any] = {}
-        page_info = PageInfo()
     elif isinstance(body, dict):
-        values = body.get(key, [])
-        page_info = PageInfo.from_dict(body.get("page"))
+        if key not in body:
+            raise TypeError(f"expected response to contain {key!r}")
+
+        values = body[key]
+        page_data = body.get("page")
+        if page_data is not None and not isinstance(page_data, dict):
+            raise TypeError("expected 'page' to be an object")
+
         metadata = {
             name: value for name, value in body.items() if name not in {key, "page"}
         }
     else:
         raise TypeError(f"expected a list or dict response, got {type(body).__name__}")
 
+    if not isinstance(values, list):
+        raise TypeError(f"expected {key!r} to contain a list")
+    if not all(isinstance(item, dict) for item in values):
+        raise TypeError(f"expected every {key!r} item to be an object")
+
     return Page(
         items=[model.model_validate(item) for item in values],
-        page_info=page_info,
+        page_info=PageInfo.from_dict(page_data),
         metadata=metadata,
     )
 
@@ -208,15 +220,34 @@ class ResourceManager:
         )
         return query
 
-    def iterate(self, **options: Any):
-        """Yield resources from successive offset-based collection pages."""
-        page_size = options.get("page_size")
+
+class CollectionManager(ResourceManager, Generic[T]):
+    """Base behavior for managers that expose paginated collection listing."""
+
+    def list(self, **options: Any) -> Page[T]:
+        """Return one page of resources.
+
+        Concrete collection managers provide the route-specific implementation.
+        """
+        raise NotImplementedError
+
+    def iterate(self, **options: Any) -> Iterator[T]:
+        """Yield resources from successive collection pages."""
+        requested_page_size = options.get("page_size")
         offset = options.get("offset", 0)
         while True:
             page = self.list(**{**options, "offset": offset})
             yield from page.items
-            if not page.items or (
-                page_size is not None and len(page.items) < page_size
+            if not page.items:
+                return
+            effective_page_size = (
+                page.page_info.page_size
+                if page.page_info.page_size is not None
+                else requested_page_size
+            )
+            if (
+                effective_page_size is not None
+                and len(page.items) < effective_page_size
             ):
                 return
             offset += len(page.items)

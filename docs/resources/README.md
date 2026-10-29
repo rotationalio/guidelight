@@ -14,6 +14,9 @@ cleanup sequence, read [Resource lifecycle](../lifecycle.md).
 - [Metrics](metrics.md)
 - [Releases](releases.md)
 - [Comments and Reviews](comments-and-reviews.md)
+- [Environments](environments.md)
+- [Providers and Credentials](providers-and-credentials.md)
+- [Models and Governance](models-and-governance.md)
 
 ## Related guides
 
@@ -27,6 +30,8 @@ All managers expose `client`. Collection managers that implement `list()` can
 use inherited `iterate(**options)` to yield models across successive
 offset-based pages. `TestCaseVersions` is not a collection manager and does not
 support `iterate()`. Collection `list()` methods return `Page[Resource]`.
+There are also configuration managers for Environments, Providers, Credentials,
+Models, and Governance Policies.
 
 Methods that accept `request=None, **fields` take either a typed request object
 or keyword fields, never both; supplying both raises `TypeError`.

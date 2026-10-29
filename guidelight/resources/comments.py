@@ -1,22 +1,23 @@
 from __future__ import annotations
+
 from ..models import Comment, CommentCreate, CommentUpdate
 from .base import (
+    CollectionManager,
     Page,
-    ResourceManager,
     decode_page,
-    request_object,
     reference,
+    request_object,
 )
 
 
-class Comments(ResourceManager):
-    """Manager for comments scoped to an Experiment or Generation."""
+class Comments(CollectionManager[Comment]):
+    """Manager for comments scoped to an Experiment."""
 
     def __init__(self, client, parent: str, parent_ref: str):
-        """Create a Comment manager for a supported parent resource."""
+        """Create a Comment manager scoped to an Experiment."""
         super().__init__(client)
-        if parent not in {"experiments", "generations"}:
-            raise ValueError("comments support only experiments and generations")
+        if parent != "experiments":
+            raise ValueError("comments support only experiments")
         self.path = (parent, reference(parent_ref), "comments")
 
     def list(self, **options) -> Page[Comment]:
@@ -26,6 +27,10 @@ class Comments(ResourceManager):
             key="comments",
             model=Comment,
         )
+
+    def __iter__(self):
+        """Iterate over Comments using default list options."""
+        return self.iterate()
 
     def create(self, request=None, **fields) -> Comment:
         """Create a comment in the configured parent scope."""

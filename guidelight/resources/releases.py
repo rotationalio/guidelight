@@ -12,7 +12,7 @@ from ..models import (
 )
 from .base import (
     Page,
-    ResourceManager,
+    CollectionManager,
     decode_many,
     decode_page,
     request_object,
@@ -21,7 +21,7 @@ from .base import (
 )
 
 
-class Releases(ResourceManager):
+class Releases(CollectionManager[Release]):
     """Manager for the Release resource."""
 
     collection_path = ("releases",)
@@ -66,6 +66,10 @@ class Releases(ResourceManager):
             key="releases",
             model=Release,
         )
+
+    def __iter__(self):
+        """Iterate over Releases using default list options."""
+        return self.iterate()
 
     def get(self, ref) -> Release:
         """Retrieve a Release by ID or supported reference."""
@@ -129,7 +133,7 @@ class Releases(ResourceManager):
         return ReleaseGenerations(self.client, ref)
 
 
-class ReleaseGenerations(ResourceManager):
+class ReleaseGenerations(CollectionManager[Generation]):
     """Manager for Generations scoped to one Release."""
 
     def __init__(self, client, release: str):
@@ -146,3 +150,7 @@ class ReleaseGenerations(ResourceManager):
             query=self._query(**options),
         )
         return decode_page(body, key="generations", model=Generation)
+
+    def __iter__(self):
+        """Iterate over Release Generations using default list options."""
+        return self.iterate()

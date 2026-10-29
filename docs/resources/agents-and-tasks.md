@@ -129,9 +129,9 @@ metrics = tasks.metrics(task)
 releases = tasks.releases(task)
 ```
 
-Delete Task dependents first: Generation and Experiment Comments, Reviews,
-Generations, retired Releases, Experiments, Metrics, and associated Test Cases
-or versions. Then delete the Task before deleting its Agent.
+Delete Task dependents first: Experiment Comments, Reviews, Generations,
+retired Releases, Experiments, Metrics, and associated Test Cases or versions.
+Then delete the Task before deleting its Agent.
 
 ```python
 tasks.delete(task.id)

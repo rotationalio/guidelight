@@ -4,19 +4,33 @@ from .agent import Agent, AgentCreate, AgentInfo, AgentUpdate
 from .associations import AssociationUpdate, GoldenExamples
 from .bao import BAO, BAOInput
 from .comment import Comment, CommentCreate, CommentUpdate
+from .environment import (
+    Environment,
+    EnvironmentCreate,
+    EnvironmentPatch,
+    EnvironmentUpdate,
+)
 from .experiment import (
     Experiment,
     ExperimentCreate,
     ExperimentPatch,
     ExperimentUpdate,
 )
-from .generation import (
-    Generation,
-    GenerationFeedback,
-    GenerationFeedbackResponse,
-    GenerationTestCaseCreate,
-)
+from .generation import Generation, GenerationTestCaseCreate
+from .governance import GovernancePolicy, GovernancePolicyCreate, GovernancePolicyPatch
 from .metric import Metric, MetricCreate, MetricOption, MetricUpdate
+from .model import Model, ModelUsage
+from .provider import (
+    Provider,
+    ProviderCreate,
+    ProviderCredential,
+    ProviderCredentialCreate,
+    ProviderCredentialPatch,
+    ProviderCredentialUpdate,
+    ProviderPatch,
+    ProviderStatusResponse,
+    ProviderUpdate,
+)
 from .release import (
     Release,
     ReleaseClone,
@@ -26,7 +40,7 @@ from .release import (
     ReleaseTestResult,
     ReleaseUpdate,
 )
-from .review import InviteReviewers, Review
+from .review import Review
 from .task import Task, TaskCounts, TaskCreate, TaskUpdate
 from .testcase import (
     TestCase,
@@ -48,20 +62,35 @@ __all__ = [
     "Comment",
     "CommentCreate",
     "CommentUpdate",
+    "Environment",
+    "EnvironmentCreate",
+    "EnvironmentPatch",
+    "EnvironmentUpdate",
     "Experiment",
     "ExperimentCreate",
     "ExperimentPatch",
     "ExperimentUpdate",
     "Generation",
-    "GenerationFeedback",
-    "GenerationFeedbackResponse",
     "GenerationTestCaseCreate",
     "GoldenExamples",
-    "InviteReviewers",
+    "GovernancePolicy",
+    "GovernancePolicyCreate",
+    "GovernancePolicyPatch",
     "Metric",
     "MetricCreate",
     "MetricOption",
     "MetricUpdate",
+    "Model",
+    "ModelUsage",
+    "Provider",
+    "ProviderCreate",
+    "ProviderCredential",
+    "ProviderCredentialCreate",
+    "ProviderCredentialPatch",
+    "ProviderCredentialUpdate",
+    "ProviderPatch",
+    "ProviderStatusResponse",
+    "ProviderUpdate",
     "Release",
     "ReleaseClone",
     "ReleaseCreate",

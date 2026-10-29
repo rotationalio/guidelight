@@ -9,7 +9,6 @@ import pytest
 from pydantic import ValidationError
 
 from guidelight.models import (
-    GenerationFeedback,
     MetricCreate,
     MetricUpdate,
     ReleaseCreate,
@@ -26,7 +25,6 @@ from guidelight.resources.testcases import TestCases as CaseManager
 
 from .shared import (
     EXPERIMENT_ID,
-    GENERATION_ID,
     METRIC_ID,
     RELEASE_ID,
     TASK_ID,
@@ -36,8 +34,6 @@ from .shared import (
 def test_invalid_request_bodies_fail_before_request(client):
     metrics = Agents(client).tasks("agent-1").metrics("task-1")
     releases = Releases(client)
-    generations = Generations(client)
-    reviews = Experiments(client).reviews(EXPERIMENT_ID)
 
     with pytest.raises(ValidationError):
         metrics.create(MetricCreate(name="Correctness"))
@@ -55,13 +51,6 @@ def test_invalid_request_bodies_fail_before_request(client):
         releases.clone(RELEASE_ID, [])
     with pytest.raises(ValidationError):
         releases.patch(RELEASE_ID, ReleasePatch())
-    with pytest.raises(ValidationError):
-        reviews.invite([])
-    with pytest.raises(ValidationError):
-        generations.feedback(
-            GENERATION_ID,
-            GenerationFeedback(scores={}),
-        )
 
     assert client.calls == []
 

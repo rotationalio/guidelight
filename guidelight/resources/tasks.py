@@ -5,7 +5,7 @@ from typing import Any
 from ..models import Task, TaskCreate, TaskUpdate
 from .base import (
     Page,
-    ResourceManager,
+    CollectionManager,
     decode_page,
     request_object,
     resolve_resource_ref,
@@ -16,7 +16,7 @@ from .releases import Releases
 from .testcases import TestCases
 
 
-class Tasks(ResourceManager):
+class Tasks(CollectionManager[Task]):
     """Tasks scoped to one Agent."""
 
     def __init__(self, client, agent: Any):
@@ -34,6 +34,10 @@ class Tasks(ResourceManager):
         query = self._query(**options)
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="tasks", model=Task)
+
+    def __iter__(self):
+        """Iterate over Tasks using default list options."""
+        return self.iterate()
 
     def get(self, ref: Any) -> Task:
         """Retrieve a Task by ID or supported reference."""

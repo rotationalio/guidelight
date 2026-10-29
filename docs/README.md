@@ -13,6 +13,10 @@ task-oriented AI systems on Endeavor.
   `Client.execute()`, select a deployment, upload files, and decode responses.
 - [Resource lifecycle](lifecycle.md) — create an Agent hierarchy, execute an
   Experiment, deploy a Release, and clean up safely.
+- [Environments](resources/environments.md), [Providers and
+  Credentials](resources/providers-and-credentials.md), and [Models and
+  Governance](resources/models-and-governance.md) — manage configuration,
+  credentials, the read-only Model catalog, and governance policies.
 - [Low-level client](client.md) — configure `Client`, call endpoint methods,
   execute deployed Tasks, and work with raw responses and errors.
 - [Resource reference](resources/README.md) — look up manager methods, model
@@ -32,8 +36,10 @@ agents = endeavor.agents
 
 The `Endeavor` object exposes:
 
-- `agents`, `test_cases`, `generations`, and `releases` as top-level resource
-  managers;
+- `agents`, `test_cases`, `generations`, and `releases` as core top-level
+  resource managers;
+- `environments`, `providers`, `models`, and `governance_policies` as
+  configuration, catalog, and governance managers;
 - `client` for authenticated low-level access;
 - `status()` for service status; and
 - `run()` for content-type-aware deployed Task execution.

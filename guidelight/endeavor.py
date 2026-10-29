@@ -7,7 +7,16 @@ from typing import Any
 
 from .client import Client
 from .exceptions import UnsupportedResponseType
-from .resources import Agents, Generations, Releases, TestCases
+from .resources import (
+    Agents,
+    Environments,
+    Generations,
+    GovernancePolicies,
+    Models,
+    Providers,
+    Releases,
+    TestCases,
+)
 from .url import URL, parse_content_type
 
 
@@ -21,12 +30,20 @@ class Endeavor:
         Tasks. ``test_cases``, ``generations``, and ``releases`` provide direct
         access to their global collections. Task-scoped Experiments, Metrics,
         Test Cases, and Releases are reached through an Agent's Task manager.
+        ``environments``, ``providers``, ``models``, and
+        ``governance_policies`` expose the Phase 4 configuration, catalog, and
+        governance resources. Integrations are not exposed until their
+        resource contract is implemented.
         """
         self._client = client
         self.agents = Agents(client)
-        self.test_cases = TestCases(client)
+        self.environments = Environments(client)
         self.generations = Generations(client)
+        self.governance_policies = GovernancePolicies(client)
+        self.models = Models(client)
+        self.providers = Providers(client)
         self.releases = Releases(client)
+        self.test_cases = TestCases(client)
 
     @property
     def client(self) -> Client:
