@@ -51,9 +51,21 @@ class Models(CollectionManager[Model]):
             return ("models",)
         return ("providers", self.provider, "models")
 
-    def list(self, **filters: Any) -> Page[Model]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
+    ) -> Page[Model]:
         """List catalog models using supported model filters."""
-        query = self._query(**filters)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="models", model=Model)
 

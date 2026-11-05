@@ -42,10 +42,21 @@ class GovernancePolicies(CollectionManager[GovernancePolicy]):
             raise ValueError("provider-scoped governance supports listing only")
 
     def list(
-        self, active: bool | None = None, **options: Any
+        self,
+        active: bool | None = None,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
     ) -> Page[GovernancePolicy]:
         """List policies while forwarding the supported active filter."""
-        query = self._query(filters={"active": active}, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters={"active": active, **filters},
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="policies", model=GovernancePolicy)
 

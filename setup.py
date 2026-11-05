@@ -4,7 +4,6 @@ import codecs
 from setuptools import setup
 from setuptools import find_packages
 
-
 ## Basic Information
 NAME = "guidelight"
 DESCRIPTION = (

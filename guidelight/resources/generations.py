@@ -22,12 +22,19 @@ class Generations(CollectionManager[Generation]):
     valid_filters = frozenset({"experiment_id", "release_id"})
 
     def list(
-        self, *, experiment_id=None, release_id=None, **options
+        self,
+        *,
+        experiment_id=None,
+        release_id=None,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
     ) -> Page[Generation]:
         """List Generations filtered by Experiment or Release."""
         if experiment_id is not None and release_id is not None:
             raise ValueError("experiment_id and release_id are mutually exclusive")
-        filters = {
+        scoped_filters = {
             key: value
             for key, value in {
                 "experiment_id": experiment_id,
@@ -35,7 +42,12 @@ class Generations(CollectionManager[Generation]):
             }.items()
             if value is not None
         }
-        query = self._query(filters=filters, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters={**scoped_filters, **filters},
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="generations", model=Generation)
 
@@ -44,8 +56,15 @@ class Generations(CollectionManager[Generation]):
         return self.iterate()
 
     def get(self, ref) -> Generation:
-        """Retrieve a Generation by ID or supported reference."""
-        return Generation.from_dict(self.client.get("generations", reference(ref)))
+        """Retrieve a Generation with attachment metadata included."""
+        body = self.client.get("generations", reference(ref))
+        if not isinstance(body, dict):
+            raise TypeError("expected Generation detail response to be an object")
+        body = dict(body)
+        for field in ("input_attachments", "output_attachments"):
+            if body.get(field) is None:
+                body[field] = []
+        return Generation.from_dict(body)
 
     def delete(self, ref) -> None:
         """Delete a Generation by ID or supported reference."""

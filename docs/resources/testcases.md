@@ -37,10 +37,54 @@ the global Test Case route. Include `task_id` or `experiment_id` in
 - `set_golden(ref, generation_id: str) -> TestCase` chooses the Generation
   used as this Test Case's golden output.
 - `versions(ref) -> TestCaseVersions` returns its version manager.
+- `download_archive(destination, request=None, **filters) -> int` streams a ZIP
+  archive of matching Test Cases to a path or binary stream.
+- `upload_archive(archive, *, task_id: str) -> TestCaseArchiveUploadResponse`
+  imports Test Cases from a ZIP archive and returns the imported count.
+- `render(test_case, *, renderer, prompts) -> RenderedPrompt` renders the
+  latest version's prompts.
 
 `list()` and `iterate()` accept `page_size`, `offset`, and `order_by`, plus
 `agent_id`, `task_id`, `experiment_id`, `context_type`, and `input_modality`
 filters.
+
+Archive downloads use a separate selection contract. Supply exactly one of
+`agent`, `task`, `experiment`, or `testcases`:
+
+```python
+with open("task-testcases.zip", "wb") as archive:
+    written = global_test_cases.download_archive(
+        archive,
+        task=task.slug,
+    )
+```
+
+The first three selectors accept the corresponding ULID or slug.
+`testcases` is a nonempty list of Test Case ULIDs. The response must be an
+`application/zip` archive; the SDK closes the streamed response after writing
+it or rejecting an invalid content type.
+
+`render()` accepts a Test Case ULID or `TestCase` response model and returns a
+typed `RenderedPrompt`. Endeavor treats template failures as normal preview
+results and returns HTTP 200, so always inspect `error` before using the
+messages:
+
+```python
+result = global_test_cases.render(
+    test_case=test_case,
+    renderer="go",
+    prompts=[
+        {
+            "index": 0,
+            "role": "user",
+            "template": "Summarize: {{ .context }}",
+        }
+    ],
+)
+
+if result.error:
+    raise ValueError(f"Prompt rendering failed: {result.error}")
+```
 
 References to a specific Test Case are ULID-only for `get`, `update`, `delete`,
 `set_golden`, and `versions`; Test Case slugs raise `ValueError` locally.
@@ -55,12 +99,31 @@ be models, ULIDs, or slugs. Pass a Generation ID—not a slug—as
 `task_id`, and `experiment_id`. The SDK permits both context fields to be
 omitted, although a particular Endeavor workflow may require an input.
 `TestCaseUpdate` has the same input fields except the relationship IDs and
-requires `title`.
+requires `title`. `input_modality` is a list of supported modality names, even
+when the Test Case uses only one modality.
 
 `TestCase` includes `id`, timestamps, `title`, `description`,
 `golden_example`, `versions`, `latest`, `selected`, and `has_golden`.
 `latest` is a `TestCaseVersion`, while `versions` contains
 `TestCaseVersionURL` entries.
+
+Import caller-provided PDF or image inputs through a
+Test Case archive. Endeavor creates the attachment Media records during the
+import.
+
+```python
+with open("invoice.zip", "rb") as archive:
+    imported = task_test_cases.upload_archive(
+        archive,
+        task_id=task.id,
+    )
+assert imported.testcases == 1
+```
+
+After importing, list or retrieve the Test Case to inspect its latest
+attachment metadata. The attachment's content type and persisted Media
+metadata are authoritative; an archive response does not need to provide a
+separate `input_modality` field.
 
 ```python
 from guidelight.models import TestCaseCreate, TestCaseUpdate
@@ -71,7 +134,7 @@ test_case = task_test_cases.create(
         description="A text evaluation input.",
         context="Coffee Shop\nTotal: $12.50",
         context_type="text/plain",
-        input_modality="Text",
+        input_modality=["Text"],
         task_id=task.id,  # required relationship despite manager scope
     )
 )
@@ -83,7 +146,7 @@ test_case = global_test_cases.update(
         description="A revised input.",
         context="Coffee Shop\nTax: $1.00\nTotal: $12.50",
         context_type="text/plain",
-        input_modality="Text",
+        input_modality=["Text"],
     ),
 )
 
@@ -104,16 +167,33 @@ versions = global_test_cases.versions(test_case.id)
 Its public operations are:
 
 - `get(version: int) -> TestCaseVersion`
+- `render(version: int, *, renderer, prompts) -> RenderedPrompt`
 - `delete(version: int) -> None`
 
 It has no `list()` method, so inherited `iterate()` is not applicable.
 `TestCaseVersion` includes `id`, numeric `version`, `context`,
 `context_type`, `input_modality`, `created`, `selected`, and `attachments`.
-Each `TestCaseAttachment` includes its ID, name, description, URL, content
-type, and creation time.
+Each attachment is a `Media` model containing fields such as its ID, name,
+description, content type, modality, file size, checksum, and authenticated
+`download_url`.
 
 ```python
 version_one = versions.get(1)
+
+rendered = versions.render(
+    1,
+    renderer="go",
+    prompts=[
+        {
+            "index": 0,
+            "role": "user",
+            "template": "Summarize: {{ document }}",
+        }
+    ],
+)
+if rendered.error:
+    raise ValueError(rendered.error)
+
 versions.delete(1)
 ```
 

@@ -1,8 +1,8 @@
-from guidelight import models as model_types
+from guidelight.models import Review
 
 
 def test_review_decodes_progress_fields():
-    review = model_types.Review.from_dict(
+    review = Review.from_dict(
         {
             "completed": 3,
             "total": 4,

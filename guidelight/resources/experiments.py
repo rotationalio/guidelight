@@ -36,15 +36,24 @@ class Experiments(CollectionManager[Experiment]):
         super().__init__(client)
         self.task = resolve_resource_ref(task) if task is not None else None
 
-    def list(self, **options) -> Page[Experiment]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[Experiment]:
         """List Experiments using supported filters and pagination options."""
         if self.task is None:
             raise ValueError("Experiment listing requires a Task manager")
 
-        filters = {
-            key: options.pop(key) for key in list(options) if key in self.valid_filters
-        }
-        query = self._query(filters=filters, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         path = (
             ("tasks", self.task, "experiments") if self.task else self.collection_path
         )

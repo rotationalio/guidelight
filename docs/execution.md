@@ -110,8 +110,8 @@ with open("sample-invoice.pdf", "rb") as document:
     )
 ```
 
-Without files, `context` is sent directly as the JSON request body; `None`
-becomes an empty object.
+Without files, the request body wraps the supplied context as
+`{"context": <context>}`; passing `None` sends `{"context": {}}`.
 
 ## Response decoding
 
@@ -119,10 +119,51 @@ becomes an empty object.
 
 - `application/json` becomes the corresponding Python value.
 - `text/plain` becomes `str`, honoring the response encoding.
+- `multipart/form-data` becomes a typed `ExecutionResult` containing the output and returned file bytes.
 - HTTP 204 becomes `None`.
 - another successful content type raises `UnsupportedResponseType`.
 
 Client methods raise Guidelight exceptions when authentication or HTTP requests fail.
+
+## Multimodal execution results
+
+Use `Endeavor.run_with_result()` to validate and decode the
+deployed Task output. It accepts both ordinary JSON output and multipart output
+with generated files:
+
+```python
+result = endeavor.run_with_result(
+    "image-agent",
+    "generate-image",
+    context={"prompt": "Generate a blue circle."},
+    environment="production",
+)
+
+if result is not None:
+    print(result.output, result.outcome)
+    print(result.model.slug, result.usage.total_tokens)
+    for attachment in result.attachments:
+        print(attachment.filename, attachment.content_type)
+        with open("generated/" + attachment.filename, "wb") as output:
+            output.write(attachment.data or b"")
+```
+
+`ExecutionResult` models the response emitted by Horizon. Its fields are
+`usage`, `model`, `output`, `mime_type`, `capabilities`, `actions`, `started`,
+`finished`, `outcome`, and `attachments`. Each execution attachment contains
+`id`, `filename`, `content_type`, `url`, and `data` when supplied by the
+runtime.
+
+Execution attachments are not persisted Endeavor `Media` objects. The immediate
+response does not include a Generation ID, Release ID, Experiment ID, or
+persisted Media metadata. Retrieve a known Generation separately when that
+resource information is needed.
+
+`run()` remains backward-compatible for JSON and text responses. For a
+multipart response it returns the same typed `ExecutionResult` so generated
+files are not exposed as undifferentiated multipart bytes. The provider and
+model must actually return media; a catalog entry alone does not guarantee
+that a deployed Task produces an attachment.
 
 ## Low-level execution and raw responses
 

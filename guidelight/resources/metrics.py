@@ -22,10 +22,25 @@ class Metrics(CollectionManager[Metric]):
         """Return the Task-scoped Metric collection path."""
         return ("tasks", self.task, "metrics")
 
-    def list(self, **options) -> Page[Metric]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[Metric]:
         """List Metrics using pagination and filter options."""
         return decode_page(
-            self.client.get(*self.collection_path, query=self._query(**options)),
+            self.client.get(
+                *self.collection_path,
+                query=self._query(
+                    page_size=page_size,
+                    offset=offset,
+                    order_by=order_by,
+                    filters=filters,
+                ),
+            ),
             key="metrics",
             model=Metric,
         )

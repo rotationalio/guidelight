@@ -1,15 +1,31 @@
 from __future__ import annotations
-from typing import Any
 
-from ..models import TestCase, TestCaseCreate, TestCaseUpdate, TestCaseVersion
+from pathlib import Path
+from typing import Any, BinaryIO
+
+from ..exceptions import InvalidResponse
+from ..media import MediaDownload
+from ..models import (
+    PromptRenderer,
+    PromptRenderRequest,
+    PromptTemplate,
+    RenderedPrompt,
+    TestCase,
+    TestCaseArchiveRequest,
+    TestCaseArchiveUploadResponse,
+    TestCaseCreate,
+    TestCaseUpdate,
+    TestCaseVersion,
+)
+from ..url import parse_content_type
 from .base import (
-    Page,
     CollectionManager,
+    Page,
     ResourceManager,
     decode_page,
+    reference,
     request_object,
     resolve_resource_ref,
-    reference,
 )
 
 
@@ -42,12 +58,21 @@ class TestCases(CollectionManager[TestCase]):
         else:
             self.parent = None
 
-    def list(self, **options) -> Page[TestCase]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[TestCase]:
         """List Test Cases using supported filters and pagination options."""
-        filters = {
-            key: options.pop(key) for key in list(options) if key in self.valid_filters
-        }
-        query = self._query(filters=filters, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         path = self.parent + ("testcases",) if self.parent else self.collection_path
         body = self.client.get(*path, query=query)
         return decode_page(body, key="testcases", model=TestCase)
@@ -95,6 +120,101 @@ class TestCases(CollectionManager[TestCase]):
         """Return a version manager scoped to a Test Case."""
         return TestCaseVersions(self.client, ref)
 
+    def download_archive(
+        self,
+        destination: str | Path | BinaryIO,
+        request=None,
+        **fields: Any,
+    ) -> int:
+        """Download matching Test Cases as a ZIP archive.
+
+        Args:
+            destination: Filesystem path or writable binary stream receiving
+                the archive.
+            request: Optional pre-built archive request model.
+            **fields: Exactly one archive selector: ``agent``, ``task``,
+                ``experiment``, or ``testcases``.
+
+        Returns:
+            The number of bytes written to ``destination``.
+        """
+        request = request_object(TestCaseArchiveRequest, request, fields)
+        response = self.client.post(
+            None,
+            "testcases",
+            "download",
+            query=request.to_dict(),
+            stream=True,
+            raw=True,
+        )
+        with MediaDownload(response) as download:
+            content_type, _ = parse_content_type(download.content_type)
+            if content_type != "application/zip":
+                raise InvalidResponse(
+                    "test case archive response must be application/zip"
+                )
+            return download.write_to(destination)
+
+    def upload_archive(
+        self,
+        archive,
+        *,
+        task_id: str,
+    ) -> TestCaseArchiveUploadResponse:
+        """Upload a Test Case ZIP archive for a Task.
+
+        Args:
+            archive: An open binary file or binary stream containing the ZIP
+                archive.
+            task_id: Task ID to associate with every imported Test Case.
+
+        Returns:
+            The server response containing the number of imported Test Cases.
+        """
+        data = {"task_id": task_id}
+        body = self.client.post(
+            data,
+            "testcases",
+            "upload",
+            files={
+                "file": (
+                    getattr(archive, "name", "testcases.zip"),
+                    archive,
+                    "application/zip",
+                )
+            },
+        )
+        return TestCaseArchiveUploadResponse.from_dict(body)
+
+    def render(
+        self,
+        test_case: str | TestCase,
+        *,
+        renderer: PromptRenderer,
+        prompts: list[PromptTemplate],
+    ) -> RenderedPrompt:
+        """Render the latest Test Case version's prompt.
+
+        Args:
+            test_case: Test Case ID or response model.
+            renderer: Renderer name used to compile the prompt.
+            prompts: Prompt templates to render with the Test Case context.
+
+        Returns:
+            The rendered messages or template error returned by Endeavor.
+            Endeavor returns HTTP 200 when rendering fails, so callers must
+            check ``result.error`` before using ``result.messages``.
+        """
+        request = PromptRenderRequest(renderer=renderer, prompts=prompts)
+        return RenderedPrompt.from_dict(
+            self.client.post(
+                request.to_dict(),
+                "testcases",
+                reference(test_case),
+                "render",
+            )
+        )
+
 
 class TestCaseVersions(ResourceManager):
     """Manager for versions belonging to one Test Case."""
@@ -108,6 +228,37 @@ class TestCaseVersions(ResourceManager):
         """Retrieve a specific Test Case version."""
         body = self.client.get("testcases", self.test_case, "versions", str(version))
         return TestCaseVersion.from_dict(body)
+
+    def render(
+        self,
+        version: int,
+        *,
+        renderer: PromptRenderer,
+        prompts: list[PromptTemplate],
+    ) -> RenderedPrompt:
+        """Render a specific Test Case version's prompt.
+
+        Args:
+            version: Numeric Test Case version to use as prompt context.
+            renderer: Renderer name used to compile the prompt.
+            prompts: Prompt templates to render with the version's context.
+
+        Returns:
+            The rendered messages or template error returned by Endeavor.
+            Endeavor returns HTTP 200 when rendering fails, so callers must
+            check ``result.error`` before using ``result.messages``.
+        """
+        request = PromptRenderRequest(renderer=renderer, prompts=prompts)
+        return RenderedPrompt.from_dict(
+            self.client.post(
+                request.to_dict(),
+                "testcases",
+                self.test_case,
+                "versions",
+                str(version),
+                "render",
+            )
+        )
 
     def delete(self, version: int) -> None:
         """Delete a specific Test Case version."""

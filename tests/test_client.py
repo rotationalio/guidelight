@@ -448,7 +448,7 @@ def test_execute_posts_json_to_path(httpserver):
     httpserver.expect_request(
         "/api/staging/agent/task/1.2.3",
         method="POST",
-        json={"question": "hello"},
+        json={"context": {"question": "hello"}},
     ).respond_with_json({"answer": 42})
 
     client = Client(httpserver.url_for(""))
@@ -465,7 +465,10 @@ def test_execute_posts_json_to_path(httpserver):
     assert result == {"answer": 42}
 
 
-def test_execute_accepts_file_shorthand(httpserver, tmp_path):
+def test_execute_accepts_file_shorthand_without_mutating_headers(
+    httpserver,
+    tmp_path,
+):
     def check_request(request):
         assert request.files["example.pdf"].filename == "example.pdf"
         assert request.files["example.pdf"].read() == b"pdf bytes"
@@ -479,6 +482,8 @@ def test_execute_accepts_file_shorthand(httpserver, tmp_path):
     path = tmp_path / "example.pdf"
     path.write_bytes(b"pdf bytes")
     client = Client(httpserver.url_for(""))
+    client._headers["X-Test"] = "preserved"
+    headers_before = dict(client._headers)
     client._pre_flight = lambda require_authentication=True: dict(client._headers)
 
     with path.open("rb") as handle:
@@ -489,12 +494,13 @@ def test_execute_accepts_file_shorthand(httpserver, tmp_path):
         )
 
     assert result == b"ok"
+    assert client._headers == headers_before
 
 
 def test_execute_normalizes_empty_files_to_json_request(httpserver):
     def check_request(request):
         assert request.content_type == "application/json"
-        assert request.get_json() == {"question": "hello"}
+        assert request.get_json() == {"context": {"question": "hello"}}
         assert not request.files
         return WerkzeugResponse("ok", status=200, content_type="text/plain")
 
@@ -664,6 +670,7 @@ def test_execute_uses_configured_timeout(monkeypatch):
     def request(method, url, **kwargs):
         captured["method"] = method
         captured["url"] = url
+        captured["json"] = kwargs["json"]
         captured["timeout"] = kwargs["timeout"]
         response = RequestsResponse()
         response.status_code = 200
@@ -676,4 +683,5 @@ def test_execute_uses_configured_timeout(monkeypatch):
     assert client.execute("agent", "task") == {"ok": True}
     assert captured["method"] == "POST"
     assert captured["url"].endswith("/api/agent/task")
+    assert captured["json"] == {"context": {}}
     assert captured["timeout"] == 7.5

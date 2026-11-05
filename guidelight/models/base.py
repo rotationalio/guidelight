@@ -4,13 +4,25 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
 TrimmedNonEmptyString = Annotated[
     str,
     StringConstraints(strip_whitespace=True, min_length=1),
+]
+
+ModalityName = Literal[
+    "Text",
+    "Image",
+    "Audio",
+    "Video",
+    "Document",
+    "Spatial",
+    "TimeSeries",
+    "Robotic",
+    "Genomic",
 ]
 
 

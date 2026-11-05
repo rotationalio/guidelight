@@ -12,13 +12,25 @@ class Reviews(CollectionManager[Review]):
         super().__init__(client)
         self.experiment = reference(experiment)
 
-    def list(self, **options) -> Page[Review]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[Review]:
         """List reviews for the configured Experiment."""
         body = self.client.get(
             "experiments",
             self.experiment,
             "reviews",
-            query=self._query(**options),
+            query=self._query(
+                page_size=page_size,
+                offset=offset,
+                order_by=order_by,
+                filters=filters,
+            ),
         )
         return decode_page(body, key="reviews", model=Review)
 

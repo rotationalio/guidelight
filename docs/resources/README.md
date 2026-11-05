@@ -11,6 +11,7 @@ cleanup sequence, read [Resource lifecycle](../lifecycle.md).
 - [Agents and Tasks](agents-and-tasks.md)
 - [Test Cases and Test Case Versions](testcases.md)
 - [Experiments and Generations](experiments-and-generations.md)
+- [Media](media.md)
 - [Metrics](metrics.md)
 - [Releases](releases.md)
 - [Comments and Reviews](comments-and-reviews.md)

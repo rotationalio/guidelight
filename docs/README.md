@@ -10,7 +10,8 @@ task-oriented AI systems on Endeavor.
 - [Core concepts](concepts.md) — understand the resource graph, manager scopes,
   references, typed models, and pagination.
 - [Executing deployed Tasks](execution.md) — use `Endeavor.run()` or
-  `Client.execute()`, select a deployment, upload files, and decode responses.
+  `run_with_result()`, select a deployment, upload files, and decode text,
+  JSON, and multimodal responses.
 - [Resource lifecycle](lifecycle.md) — create an Agent hierarchy, execute an
   Experiment, deploy a Release, and clean up safely.
 - [Environments](resources/environments.md), [Providers and
@@ -40,6 +41,7 @@ The `Endeavor` object exposes:
   resource managers;
 - `environments`, `providers`, `models`, and `governance_policies` as
   configuration, catalog, and governance managers;
+- `media` for authorized Media metadata and downloads;
 - `client` for authenticated low-level access;
 - `status()` for service status; and
 - `run()` for content-type-aware deployed Task execution.
