@@ -128,9 +128,9 @@ experiment = experiments.patch(
 )
 ```
 
-Delete Experiment Comments and Reviews, its Generations, and every Release
-that promotes it before deleting the Experiment. Remove associated Test Case
-Versions when required by the service.
+Delete Reviews, Generations, and every Release that promotes an Experiment
+before deleting it. Remove associated Test Case Versions when required by the
+service.
 
 ```python
 experiments.delete(experiment.id)
@@ -169,10 +169,27 @@ validation. Body values such as filter IDs and Test Case IDs in
 `Generation` includes IDs for its Experiment, Release, previous, and next
 Generation; title, error, context, rendered prompt, modalities, output text,
 timing, invocation/tool-call counts, token and cost data, attachments, and
-golden-example Test Cases. `GenerationTestCaseCreate` requires at least one
-Task ID, optionally accepts a Test Case name, and uses `from_input=False` by
-default. Experiment Generations must use their output because Endeavor rejects
-`from_input=True` for them.
+golden-example Test Cases. Its `attachments_included` property distinguishes
+included attachment metadata from fields omitted by a list response.
+`GenerationTestCaseCreate` requires at least one Task ID, optionally accepts a
+Test Case name, and uses `from_input=False` by default. Experiment Generations
+must use their output because Endeavor rejects `from_input=True` for them.
+
+Retrieve complete output attachment metadata from a Generation detail response:
+
+```python
+generation = generations.get(generation_id)
+print(generation.output_text)
+for attachment in generation.output_attachments or []:
+    print(attachment.id, attachment.name, attachment.content_type)
+```
+
+`generations.list()` returns summary records and omits attachment metadata even
+when a Generation has attachments, so its attachment fields are `None`.
+`generations.get()` returns Generation details with attachment metadata
+included; its attachment fields are lists, with an empty list indicating no
+attachments. Use `attachments_included` to distinguish these states. Use the
+Media manager to download attachment content.
 
 Reviewer-specific Generation Metrics, feedback, and Generation Comments are
 not exposed by Guidelight. Their Endeavor routes require user-subject claims,

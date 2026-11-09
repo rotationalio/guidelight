@@ -72,6 +72,7 @@ endeavor.environments
 endeavor.providers
 endeavor.models
 endeavor.governance_policies
+endeavor.media
 ```
 
 Managers for owned resources are obtained from their parent:
@@ -125,6 +126,19 @@ because Endeavor exposes only version-specific `get()` and `delete()` routes.
 Models are read-only catalog resources. Environments, Providers, Credentials,
 and Governance Policies are configuration resources with typed request models
 and route-specific filters. Integrations are not exposed by this SDK version.
+
+## Multimodal data
+
+Input and output modalities describe the intended form of Task data, such as
+`Text`, `Image`, or `Document`. A modality is distinct from a MIME type: for
+example, a PDF uses the `Document` modality and the `application/pdf` content
+type. The provider and model remain authoritative; a declared image modality
+does not guarantee that an execution generates an image.
+
+Generation and Test Case responses expose Media metadata separately from the
+binary file. Use `endeavor.media.download()` to stream an authorized Media
+file. Direct Media creation is not exposed for API-subject clients; import
+caller-provided PDF and image files through Test Case archive upload instead.
 
 ## Slugs and ULIDs
 

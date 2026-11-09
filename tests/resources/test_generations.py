@@ -11,9 +11,13 @@ from .shared import (
 
 
 def test_generation_filters_are_forwarded_and_mutually_exclusive(client_factory):
-    client = client_factory([{"page": {}, "generations": []}])
-    Generations(client).list(release_id=RELEASE_ID)
+    client = client_factory([{"page": {}, "generations": [{"id": GENERATION_ID}]}])
+    page = Generations(client).list(release_id=RELEASE_ID)
+
     assert client.calls[0][2]["release_id"] == RELEASE_ID
+    assert page.items[0].input_attachments is None
+    assert page.items[0].output_attachments is None
+    assert not page.items[0].attachments_included
     with pytest.raises(ValueError):
         Generations(client).list(experiment_id="e", release_id="r")
 
@@ -26,6 +30,9 @@ def test_generation_get_and_delete_routes(client_factory):
     generations.delete(GENERATION_ID)
 
     assert generation.id == GENERATION_ID
+    assert generation.input_attachments == []
+    assert generation.output_attachments == []
+    assert generation.attachments_included
     assert client.calls == [
         ("GET", ("generations", GENERATION_ID), None),
         ("DELETE", ("generations", GENERATION_ID), {}),

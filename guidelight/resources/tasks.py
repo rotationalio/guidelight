@@ -29,9 +29,21 @@ class Tasks(CollectionManager[Task]):
         """Return the Agent-scoped Task collection path."""
         return ("agents", self.agent, "tasks")
 
-    def list(self, **options) -> Page[Task]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
+    ) -> Page[Task]:
         """List Tasks belonging to the configured Agent."""
-        query = self._query(**options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="tasks", model=Task)
 

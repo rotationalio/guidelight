@@ -54,12 +54,21 @@ class Releases(CollectionManager[Release]):
         super().__init__(client)
         self.task = resolve_resource_ref(task) if task is not None else None
 
-    def list(self, **options) -> Page[Release]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[Release]:
         """List Releases using supported filters and pagination options."""
-        filters = {
-            key: options.pop(key) for key in list(options) if key in self.valid_filters
-        }
-        query = self._query(filters=filters, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         path = ("tasks", self.task, "releases") if self.task else self.collection_path
         return decode_page(
             self.client.get(*path, query=query),
@@ -141,13 +150,25 @@ class ReleaseGenerations(CollectionManager[Generation]):
         super().__init__(client)
         self.release = reference(release)
 
-    def list(self, **options) -> Page[Generation]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters,
+    ) -> Page[Generation]:
         """List Generations for the configured Release."""
         body = self.client.get(
             "releases",
             self.release,
             "generations",
-            query=self._query(**options),
+            query=self._query(
+                page_size=page_size,
+                offset=offset,
+                order_by=order_by,
+                filters=filters,
+            ),
         )
         return decode_page(body, key="generations", model=Generation)
 

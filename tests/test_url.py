@@ -67,24 +67,30 @@ def test_resolve(url, endpoint, query, expected):
     assert str(resolved) == expected
 
 
-@pytest.mark.parametrize("input,expected", [
-    ("http://example.com", "example.com"),
-    ("https://example.com/path", "example.com"),
-    ("ftp://ftp.example.com/resource", "ftp.example.com"),
-    ("http://example.com:8080", "example.com:8080"),
-    ("http://localhost", "localhost"),
-    ("http://localhost:9000/path", "localhost:9000"),
-    ("http://example.local", "example.local"),
-])
+@pytest.mark.parametrize(
+    "input,expected",
+    [
+        ("http://example.com", "example.com"),
+        ("https://example.com/path", "example.com"),
+        ("ftp://ftp.example.com/resource", "ftp.example.com"),
+        ("http://example.com:8080", "example.com:8080"),
+        ("http://localhost", "localhost"),
+        ("http://localhost:9000/path", "localhost:9000"),
+        ("http://example.local", "example.local"),
+    ],
+)
 def test_parse_host(input, expected):
     actual = parse_host(input)
     assert actual == expected
 
 
-@pytest.mark.parametrize("input,mime,params", [
-    ("text/html; charset=UTF-8", "text/html", {"charset": "UTF-8"}),
-    ("application/json", "application/json", {}),
-])
+@pytest.mark.parametrize(
+    "input,mime,params",
+    [
+        ("text/html; charset=UTF-8", "text/html", {"charset": "UTF-8"}),
+        ("application/json", "application/json", {}),
+    ],
+)
 def test_parse_content_type(input, mime, params):
     result_mime, result_params = parse_content_type(input)
     assert result_mime == mime

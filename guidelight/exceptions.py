@@ -59,3 +59,7 @@ class UnsupportedResponseType(EndeavorError):
         super().__init__(
             f"unsupported task response content type: {mime_type or '<missing>'}"
         )
+
+
+class InvalidResponse(EndeavorError):
+    """The server returned a successful response with an invalid body."""

@@ -8,13 +8,20 @@ from .environments import Environments
 from .experiments import Experiments
 from .generations import Generations
 from .governance import GovernancePolicies
+from .media import MediaCollection
 from .metrics import Metrics
 from .models import Models
 from .providers import Providers
 from .releases import ReleaseGenerations, Releases
 from .reviews import Reviews
 from .tasks import Tasks
-from .testcases import TestCases, TestCaseVersions
+from .testcases import (
+    TestCases,
+    TestCaseVersions,
+    TestCaseArchiveUploadResponse,
+    TestCaseArchiveRequest,
+    PromptRenderRequest,
+)
 
 __all__ = [
     "AgentTasks",
@@ -25,6 +32,7 @@ __all__ = [
     "Experiments",
     "Generations",
     "GovernancePolicies",
+    "MediaCollection",
     "Metrics",
     "Models",
     "Page",
@@ -38,5 +46,8 @@ __all__ = [
     "Tasks",
     "TestCaseVersions",
     "TestCases",
+    "TestCaseArchiveUploadResponse",
+    "TestCaseArchiveRequest",
+    "PromptRenderRequest",
     "reference",
 ]

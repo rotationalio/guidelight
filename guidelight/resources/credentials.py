@@ -34,11 +34,23 @@ class ProviderCredentials(CollectionManager[ProviderCredential]):
         """Return the provider-scoped credential collection path."""
         return ("providers", self.provider, "credentials")
 
-    def list(self, **options: Any) -> Page[ProviderCredential]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
+    ) -> Page[ProviderCredential]:
         """List credentials for the configured provider."""
         body = self.client.get(
             *self.collection_path,
-            query=self._query(**options),
+            query=self._query(
+                page_size=page_size,
+                offset=offset,
+                order_by=order_by,
+                filters=filters,
+            ),
         )
         return decode_page(body, key="credentials", model=ProviderCredential)
 

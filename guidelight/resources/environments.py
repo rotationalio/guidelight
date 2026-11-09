@@ -14,9 +14,22 @@ class Environments(CollectionManager[Environment]):
     collection_path = ("environments",)
     valid_filters = frozenset({"provider_id"})
 
-    def list(self, provider_id: str | None = None, **options: Any) -> Page[Environment]:
+    def list(
+        self,
+        provider_id: str | None = None,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
+    ) -> Page[Environment]:
         """List environments, optionally filtered by provider."""
-        query = self._query(filters={"provider_id": provider_id}, **options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters={"provider_id": provider_id, **filters},
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="environments", model=Environment)
 

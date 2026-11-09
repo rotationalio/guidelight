@@ -29,9 +29,21 @@ class Providers(CollectionManager[Provider]):
     collection_path = ("providers",)
     valid_filters = frozenset()
 
-    def list(self, **options: Any) -> Page[Provider]:
+    def list(
+        self,
+        *,
+        page_size: int | None = None,
+        offset: int = 0,
+        order_by: str | list[str] | None = None,
+        **filters: Any,
+    ) -> Page[Provider]:
         """List configured providers."""
-        query = self._query(**options)
+        query = self._query(
+            page_size=page_size,
+            offset=offset,
+            order_by=order_by,
+            filters=filters,
+        )
         body = self.client.get(*self.collection_path, query=query)
         return decode_page(body, key="providers", model=Provider)
 

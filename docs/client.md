@@ -210,14 +210,16 @@ with open("fictional-note.txt", "rb") as note:
     )
 ```
 
-Without files, `context` is the JSON request body; `None` becomes `{}`.
+Without files, the request body wraps the supplied context as
+`{"context": <context>}`; passing `None` sends `{"context": {}}`.
 
 ## Responses and errors
 
 For ordinary methods and `execute(raw=False)`:
 
 - `application/json` responses are decoded to Python values.
-- Other successful response bodies are returned as `bytes`.
+- Other successful response bodies, including multipart execution responses,
+  are returned as `bytes`.
 - HTTP 204 returns `None`.
 
 With `raw=True`, or `stream=True` on ordinary request methods, successful

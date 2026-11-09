@@ -5,8 +5,7 @@
 
 Comments exposed by Guidelight annotate an Experiment. Reviews belong to one
 Experiment and track an invited user's evaluation progress. Neither resource
-has a global collection manager. Generation Comments require user-subject
-claims and are not exposed by the API-key-authenticated SDK.
+has a global collection manager.
 
 ## Comments
 
@@ -23,47 +22,16 @@ constructor requires a strict ULID; Experiment slugs fail local validation.
 
 - `list(**options) -> Page[Comment]` lists Comments under the parent.
 - `iterate(**options)` yields the parent's Comments across list pages.
-- `create(request=None, **fields) -> Comment` creates under the parent, using
-  `CommentCreate`.
-- `update(ref, request=None, **fields) -> Comment` updates content, using
-  `CommentUpdate`.
-- `delete(ref) -> None` deletes the Comment.
 
 `list()` and `iterate()` accept `page_size`, `offset`, and `order_by`; there
-are no Comment-specific filters. Comment references passed to `update` and
-`delete` are also strict ULIDs. The manager uses the parent-scoped route for
-all operations, so use the manager belonging to the Comment's actual parent.
-
-`CommentCreate` requires `content` and optionally accepts a `reply_to`
-Comment ID. `CommentUpdate` requires `content`. The `Comment` response
-includes `id`, timestamps, `object_url`, rendered and source content,
-`reply_to`, user data, and nested replies.
+are no Comment-specific filters. The `Comment` response includes `id`,
+timestamps, `object_url`, rendered and source content, `reply_to`, user data,
+and nested replies.
 
 ```python
-from guidelight.models import CommentCreate, CommentUpdate
-
-comment = experiment_comments.create(
-    CommentCreate(content="The output looks correct.")
-)
-
-reply = experiment_comments.create(
-    CommentCreate(
-        content="Confirmed after a second pass.",
-        reply_to=comment.id,
-    )
-)
-
-comment = experiment_comments.update(
-    comment.id,
-    CommentUpdate(content="The output looks correct after review."),
-)
-
-experiment_comments.delete(reply.id)
-experiment_comments.delete(comment.id)
+for comment in experiment_comments.list():
+    print(comment.user, comment.content)
 ```
-
-Delete replies before their parent Comment when the service does not cascade
-them. Delete all Experiment Comments before deleting that Experiment.
 
 ## Reviews
 

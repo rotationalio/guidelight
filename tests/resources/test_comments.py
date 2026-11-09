@@ -9,35 +9,30 @@ from .shared import (
 )
 
 
-def test_comment_update_delete_for_experiment_parent(client_factory):
+def test_comments_list_for_experiment_parent(client_factory):
     client = client_factory(
         [
             {
-                "id": COMMENT_ID_1,
-                "content": "Updated experiment comment",
+                "page": {},
+                "comments": [
+                    {
+                        "id": COMMENT_ID_1,
+                        "content": "Experiment comment",
+                    }
+                ],
             },
         ]
     )
     experiment_comments = Comments(client, "experiments", EXPERIMENT_ID)
 
-    experiment_comment = experiment_comments.update(
-        COMMENT_ID_1,
-        content="Updated experiment comment",
-    )
-    experiment_comments.delete(COMMENT_ID_1)
+    page = experiment_comments.list(page_size=25)
 
-    assert experiment_comment.content == "Updated experiment comment"
+    assert page.items[0].content == "Experiment comment"
     assert client.calls == [
         (
-            "PUT",
-            ("experiments", EXPERIMENT_ID, "comments", COMMENT_ID_1),
-            {"content": "Updated experiment comment"},
-            {},
-        ),
-        (
-            "DELETE",
-            ("experiments", EXPERIMENT_ID, "comments", COMMENT_ID_1),
-            {},
+            "GET",
+            ("experiments", EXPERIMENT_ID, "comments"),
+            {"page_size": 25, "offset": 0},
         ),
     ]
 

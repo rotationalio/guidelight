@@ -3,12 +3,19 @@
 from .agent import Agent, AgentCreate, AgentInfo, AgentUpdate
 from .associations import AssociationUpdate, GoldenExamples
 from .bao import BAO, BAOInput
-from .comment import Comment, CommentCreate, CommentUpdate
+from .base import ModalityName
+from .comment import Comment
 from .environment import (
     Environment,
     EnvironmentCreate,
     EnvironmentPatch,
     EnvironmentUpdate,
+)
+from .execution import (
+    ExecutionAttachment,
+    ExecutionModel,
+    ExecutionResult,
+    ExecutionUsage,
 )
 from .experiment import (
     Experiment,
@@ -18,6 +25,7 @@ from .experiment import (
 )
 from .generation import Generation, GenerationTestCaseCreate
 from .governance import GovernancePolicy, GovernancePolicyCreate, GovernancePolicyPatch
+from .media import Media, MediaUpdate
 from .metric import Metric, MetricCreate, MetricOption, MetricUpdate
 from .model import Model, ModelUsage
 from .provider import (
@@ -43,8 +51,15 @@ from .release import (
 from .review import Review
 from .task import Task, TaskCounts, TaskCreate, TaskUpdate
 from .testcase import (
+    PromptRenderer,
+    PromptRenderRequest,
+    PromptRole,
+    PromptTemplate,
+    RenderedMessage,
+    RenderedPrompt,
     TestCase,
-    TestCaseAttachment,
+    TestCaseArchiveRequest,
+    TestCaseArchiveUploadResponse,
     TestCaseCreate,
     TestCaseUpdate,
     TestCaseVersion,
@@ -52,20 +67,22 @@ from .testcase import (
 )
 
 __all__ = [
+    "BAO",
     "Agent",
     "AgentCreate",
     "AgentInfo",
     "AgentUpdate",
     "AssociationUpdate",
-    "BAO",
     "BAOInput",
     "Comment",
-    "CommentCreate",
-    "CommentUpdate",
     "Environment",
     "EnvironmentCreate",
     "EnvironmentPatch",
     "EnvironmentUpdate",
+    "ExecutionAttachment",
+    "ExecutionModel",
+    "ExecutionResult",
+    "ExecutionUsage",
     "Experiment",
     "ExperimentCreate",
     "ExperimentPatch",
@@ -76,12 +93,19 @@ __all__ = [
     "GovernancePolicy",
     "GovernancePolicyCreate",
     "GovernancePolicyPatch",
+    "Media",
+    "MediaUpdate",
     "Metric",
     "MetricCreate",
     "MetricOption",
     "MetricUpdate",
+    "ModalityName",
     "Model",
     "ModelUsage",
+    "PromptRenderRequest",
+    "PromptRenderer",
+    "PromptRole",
+    "PromptTemplate",
     "Provider",
     "ProviderCreate",
     "ProviderCredential",
@@ -98,13 +122,16 @@ __all__ = [
     "ReleaseTest",
     "ReleaseTestResult",
     "ReleaseUpdate",
+    "RenderedMessage",
+    "RenderedPrompt",
     "Review",
     "Task",
     "TaskCounts",
     "TaskCreate",
     "TaskUpdate",
     "TestCase",
-    "TestCaseAttachment",
+    "TestCaseArchiveRequest",
+    "TestCaseArchiveUploadResponse",
     "TestCaseCreate",
     "TestCaseUpdate",
     "TestCaseVersion",

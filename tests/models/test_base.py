@@ -2,26 +2,38 @@ from datetime import datetime, timezone
 
 import pytest
 
-from guidelight import models as model_types
+from guidelight.models import (
+    BAO,
+    Comment,
+    Generation,
+    Media,
+    Metric,
+    Release,
+    ReleaseUpdate,
+    Review,
+    Task,
+    TestCase as Case,
+    TestCaseVersion as CaseVersion,
+)
 
 
 @pytest.mark.parametrize(
     ("model_type", "timestamp_fields"),
     [
-        (model_types.BAO, ("created", "modified")),
-        (model_types.Comment, ("created", "modified")),
-        (model_types.Generation, ("created", "modified", "started")),
-        (model_types.Metric, ("created", "modified")),
+        (BAO, ("created", "modified")),
+        (Comment, ("created", "modified")),
+        (Generation, ("created", "modified", "started")),
+        (Media, ("created", "modified")),
+        (Metric, ("created", "modified")),
         (
-            model_types.Release,
+            Release,
             ("created", "modified", "deployed_on", "retired_on"),
         ),
-        (model_types.ReleaseUpdate, ("deployed_on", "retired_on")),
-        (model_types.Review, ("created", "modified")),
-        (model_types.Task, ("created", "modified")),
-        (model_types.TestCase, ("created", "modified")),
-        (model_types.TestCaseVersion, ("created",)),
-        (model_types.TestCaseAttachment, ("created",)),
+        (ReleaseUpdate, ("deployed_on", "retired_on")),
+        (Review, ("created", "modified")),
+        (Task, ("created", "modified")),
+        (Case, ("created", "modified")),
+        (CaseVersion, ("created",)),
     ],
 )
 def test_resource_timestamps_parse_rfc3339(model_type, timestamp_fields):

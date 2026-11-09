@@ -1,11 +1,11 @@
 import pytest
 from pydantic import ValidationError
 
-from guidelight import models as model_types
+from guidelight.models import MetricCreate, Task, TaskCreate, TaskUpdate
 
 
 def test_task_response_keeps_read_only_fields_out_of_requests():
-    task = model_types.Task.from_dict(
+    task = Task.from_dict(
         {
             "id": "task-1",
             "name": "Summarize",
@@ -21,16 +21,16 @@ def test_task_response_keeps_read_only_fields_out_of_requests():
 
 
 def test_task_requests_serialize_metrics_only_on_create():
-    metric = model_types.MetricCreate(
+    metric = MetricCreate(
         name="Correctness",
         scoring="numeric",
     )
-    create = model_types.TaskCreate(
+    create = TaskCreate(
         name="Summarize",
         description="Summarize text.",
         metrics=[metric],
     )
-    update = model_types.TaskUpdate(
+    update = TaskUpdate(
         name="Summarize",
         description="Updated description.",
     )
@@ -46,7 +46,7 @@ def test_task_requests_serialize_metrics_only_on_create():
     assert "metrics" not in update.to_dict()
 
     with pytest.raises(ValidationError):
-        model_types.TaskUpdate(
+        TaskUpdate(
             name="Summarize",
             description="Updated description.",
             metrics=[metric],

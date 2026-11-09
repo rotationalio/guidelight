@@ -60,7 +60,7 @@ tasks = agents.tasks(agent)
 ```
 
 Delete an Agent only after deleting its Tasks. Each Task's Releases,
-Experiments, Metrics, Test Cases, Generations, Comments, and Reviews should be
+Experiments, Metrics, Test Cases, Generations, and Reviews should be
 handled first; see [reverse-order cleanup](../lifecycle.md#8-clean-up-in-reverse-dependency-order).
 
 ```python
@@ -129,9 +129,9 @@ metrics = tasks.metrics(task)
 releases = tasks.releases(task)
 ```
 
-Delete Task dependents first: Experiment Comments, Reviews, Generations,
-retired Releases, Experiments, Metrics, and associated Test Cases or versions.
-Then delete the Task before deleting its Agent.
+Delete Task dependents first: Reviews, Generations, retired Releases,
+Experiments, Metrics, and associated Test Cases or versions. Then delete the
+Task before deleting its Agent.
 
 ```python
 tasks.delete(task.id)

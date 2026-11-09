@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from .base import RequestModel, ResponseModel
+from .base import ModalityName, RequestModel, ResponseModel
 
 ExperimentStatus = Literal[
     "unknown",
@@ -18,19 +18,6 @@ ExperimentStatus = Literal[
     "completed",
     "error",
     "archived",
-]
-
-
-ModalityName = Literal[
-    "Text",
-    "Image",
-    "Audio",
-    "Video",
-    "Document",
-    "Spatial",
-    "TimeSeries",
-    "Robotic",
-    "Genomic",
 ]
 
 RendererName = Literal["sprintf", "jinja", "go"]

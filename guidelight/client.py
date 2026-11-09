@@ -307,7 +307,7 @@ class Client(object):
         if files:
             data = {"context": _serialize_context(context)}
         else:
-            data = context if context is not None else {}
+            data = {"context": context if context is not None else {}}
 
         return self._request(
             "POST",
@@ -513,12 +513,16 @@ class Client(object):
         files = files or None
 
         if files is not None:
+            # Keep multipart headers request-local so preparing this request
+            # cannot leak a generated Content-Type boundary or other header
+            # changes into headers used by later requests.
+            request_headers = dict(headers)
             rep = self.session.request(
                 method,
                 str(url),
                 data=data,
                 files=files,
-                headers=headers,
+                headers=request_headers,
                 timeout=self.timeout,
                 stream=stream,
             )

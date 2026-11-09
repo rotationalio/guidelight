@@ -1,7 +1,6 @@
 """Shared fixtures and identifiers for resource manager tests."""
 
 COMMENT_ID_1 = "01ARZ3NDEKTSV4RRFFQ69G5FB2"
-COMMENT_ID_2 = "01ARZ3NDEKTSV4RRFFQ69G5FB3"
 EXPERIMENT_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 GENERATION_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAW"
 METRIC_ID = "01ARZ3NDEKTSV4RRFFQ69G5FAZ"
@@ -25,8 +24,11 @@ class FakeClient:
     def _response(self):
         return self.responses.pop(0) if self.responses else None
 
-    def get(self, *endpoint, query=None):
-        self.calls.append(("GET", endpoint, query))
+    def get(self, *endpoint, query=None, **options):
+        if options:
+            self.calls.append(("GET", endpoint, query, options))
+        else:
+            self.calls.append(("GET", endpoint, query))
         if self.responses:
             return self._response()
         if endpoint == ("agents",):

@@ -1,4 +1,4 @@
-"""Comment response models and writable request types."""
+"""Comment response models."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from .base import RequestModel, ResponseModel
+from .base import ResponseModel
 
 
 class Comment(ResponseModel):
@@ -22,16 +22,3 @@ class Comment(ResponseModel):
     reply_to: str | None = None
     user: Any = None
     replies: list[Comment] = Field(default_factory=list)
-
-
-class CommentCreate(RequestModel):
-    """Writable fields accepted when creating a Comment."""
-
-    content: str
-    reply_to: str | None = None
-
-
-class CommentUpdate(RequestModel):
-    """Writable fields accepted when updating a Comment."""
-
-    content: str

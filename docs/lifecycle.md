@@ -85,7 +85,7 @@ test_case = endeavor.test_cases.create(
         description="A fictional message used for evaluation.",
         context="When would my example order arrive?",
         context_type="text/plain",
-        input_modality="Text",
+        input_modality=["Text"],
         task_id=task.id,
     )
 )
@@ -262,7 +262,7 @@ for files, complete URLs, origin restrictions, and response decoding.
 
 Remove dependents before parents. A comprehensive cleanup follows this order:
 
-1. Experiment Comments and Reviews.
+1. Experiment Reviews.
 2. Generations created by Experiments or deployed Releases.
 3. Retire deployed Releases, then delete Releases.
 4. Delete Experiments.
@@ -271,7 +271,7 @@ Remove dependents before parents. A comprehensive cleanup follows this order:
 7. Delete Tasks.
 8. Delete the Agent last.
 
-For the minimal resources above, which did not create Comments or Reviews:
+For the minimal resources above, which did not create Reviews:
 
 ```python
 for generation in endeavor.generations.list(experiment_id=experiment.id):
