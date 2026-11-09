@@ -148,13 +148,18 @@ experiment = experiments.update(
             },
             {
                 "role": "user",
-                "template": "{{ context }}",
+                "template": "{{ .context }}",
             },
         ],
         parameters={"temperature": 0},
     ),
 )
 ```
+
+The text supplied as the Test Case `context` in step 2 is stored under the
+`context` key, so the user prompt reads it with `{{ .context }}`. When this
+Experiment is promoted to a Release, the Release retains these prompts; the
+deployed call in step 7 supplies a matching `"context"` value.
 
 The transition validates configuration and asynchronously queues execution.
 Poll the Experiment instead of assuming the update response means all
@@ -248,11 +253,16 @@ selectors:
 result = endeavor.run(
     agent.slug or agent.id,
     task.slug or task.id,
-    context={"message": "When would my example order arrive?"},
+    context={"context": "When would my example order arrive?"},
     environment="staging",
     version=release.version,
 )
 ```
+
+`Endeavor.run()` sends the supplied dictionary as the deployed Task's context.
+It does not add a dictionary key based on the Python parameter name. Prompt
+variables must therefore match the supplied keys: `{{ .context }}` reads the
+`"context"` key used above.
 
 This call is synchronous from the caller's perspective and may produce a
 Release-associated Generation. See [Executing deployed Tasks](execution.md)

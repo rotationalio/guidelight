@@ -14,6 +14,7 @@ from requests import Response
 from platform import python_version
 from requests.sessions import Session
 from requests.adapters import HTTPAdapter
+from requests.exceptions import JSONDecodeError
 
 from .credentials import Credentials
 from .helpers import (
@@ -25,14 +26,13 @@ from .helpers import (
 )
 from .url import URL, parse_content_type
 from .version import get_version
-from .exceptions import ClientError, ServerError
-from .exceptions import AuthenticationError, NotFound
-
-try:
-    from json import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
-
+from .exceptions import (
+    AuthenticationError,
+    ClientError,
+    InvalidResponse,
+    NotFound,
+    ServerError,
+)
 
 # Setup debug logging for guidelight
 logger = logging.getLogger("endeavor")
@@ -341,7 +341,19 @@ class Client(object):
 
             mimetype, _ = parse_content_type(rep.headers.get("Content-Type"))
             if mimetype == "application/json":
-                return rep.json()
+                try:
+                    return rep.json()
+                except JSONDecodeError as exc:
+                    body_state = "empty" if not rep.content.strip() else "malformed"
+                    url = rep.url or "unknown url"
+                    content_type = rep.headers.get("Content-Type", "missing")
+                    raise InvalidResponse(
+                        "Invalid successful JSON response: "
+                        f"status={rep.status_code} "
+                        f"url={url} "
+                        f"content-type={content_type!r} "
+                        f"body={body_state}"
+                    ) from exc
             else:
                 return rep.content
 

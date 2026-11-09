@@ -27,6 +27,22 @@ endeavor.run(
 Select a deployed Task by Agent and Task slug or ID:
 
 ```python
+prompts = [
+    {
+        "role": "system",
+        "template": (
+            "Classify the customer request and recommend the next action."
+        ),
+    },
+    {
+        "role": "user",
+        "template": (
+            "Subject: {{ .subject }}\n"
+            "Customer message: {{ .message }}"
+        ),
+    },
+]
+
 result = endeavor.run(
     "northwind-triage",
     "classify-request",
@@ -34,6 +50,39 @@ result = endeavor.run(
         "subject": "Example delivery question",
         "message": "When would a fictional order arrive?",
     },
+)
+```
+
+### Context keys and prompt variables
+
+The `prompts` variable illustrates the prompts configured on the Experiment
+before its Release was created and deployed. It is not passed to
+`endeavor.run()` because the deployed Release already contains those prompts.
+The run call supplies the values used to render them.
+
+The value passed to `context` becomes the Task context; the Python argument
+name does not create another key inside that value. Here, the `"subject"` and
+`"message"` keys correspond directly to `{{ .subject }}` and
+`{{ .message }}` in the configured Go template.
+
+If a prompt instead uses `{{ .context }}`, supply a matching key:
+
+```python
+prompts = [
+    {
+        "role": "system",
+        "template": "Classify the customer request.",
+    },
+    {
+        "role": "user",
+        "template": "{{ .context }}",
+    },
+]
+
+result = endeavor.run(
+    "northwind-triage",
+    "classify-request",
+    context={"context": "When would a fictional order arrive?"},
 )
 ```
 

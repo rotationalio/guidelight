@@ -158,6 +158,11 @@ result = client.execute(
 )
 ```
 
+The context dictionary keys must match the deployed prompt variables; this
+example assumes a Go template using `{{ .note }}`. See
+[Context keys and prompt variables](execution.md#context-keys-and-prompt-variables)
+for the mapping between prompt definitions and execution input.
+
 `environment` is optional and prefixes the Agent and Task in the deployed
 route. `version` is optional, follows the Task, and must be valid semantic
 versioning. Every selector must be one safe URL path component.

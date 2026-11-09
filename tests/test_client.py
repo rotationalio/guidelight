@@ -4,12 +4,14 @@ import json
 import pytest
 from pytest_httpserver import HTTPServer
 from requests import Response as RequestsResponse
+from requests.exceptions import JSONDecodeError
 from werkzeug.wrappers import Response as WerkzeugResponse
 
 from guidelight.client import Client
 from guidelight.exceptions import (
     AuthenticationError,
     ClientError,
+    InvalidResponse,
     NotFound,
     ServerError,
 )
@@ -685,3 +687,79 @@ def test_execute_uses_configured_timeout(monkeypatch):
     assert captured["url"].endswith("/api/agent/task")
     assert captured["json"] == {"context": {}}
     assert captured["timeout"] == 7.5
+
+
+@pytest.mark.parametrize(
+    ("body", "body_state"),
+    [
+        (b"", "empty"),
+        (b"   \n", "empty"),
+        (b'{"release":', "malformed"),
+    ],
+)
+def test_handle_classifies_invalid_successful_json(body, body_state):
+    client = Client("https://endeavor.example.com")
+    rep = response(200, body)
+    rep.url = "https://endeavor.example.com/v2/releases/release-1/deploy"
+
+    with pytest.raises(
+        InvalidResponse,
+        match=(
+            r"Invalid successful JSON response: "
+            r"status=200 .*content-type='application/json' "
+            rf"body={body_state}"
+        ),
+    ) as exc_info:
+        client.handle(rep)
+
+    assert isinstance(exc_info.value.__cause__, JSONDecodeError)
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        (b"{}", {}),
+        (b"[]", []),
+        (b"null", None),
+    ],
+)
+def test_handle_preserves_valid_successful_json_values(body, expected):
+    client = Client("https://endeavor.example.com")
+    rep = response(200, body)
+
+    assert client.handle(rep) == expected
+
+
+def test_handle_keeps_no_content_distinct_from_empty_json():
+    client = Client("https://endeavor.example.com")
+    rep = response(204, b"")
+
+    assert client.handle(rep) is None
+
+
+def test_execute_preserves_documented_context_key(httpserver):
+    def check_request(request):
+        assert request.get_json() == {
+            "context": {
+                "context": "A fictional project update.",
+            }
+        }
+        return WerkzeugResponse(
+            '{"output":"ok"}',
+            status=200,
+            content_type="application/json",
+        )
+
+    httpserver.expect_request(
+        "/api/atlas-assistant/summarize-note",
+        method="POST",
+    ).respond_with_handler(check_request)
+
+    client = Client(httpserver.url_for(""))
+    client._pre_flight = lambda require_authentication=True: dict(client._headers)
+
+    client.execute(
+        "atlas-assistant",
+        "summarize-note",
+        context={"context": "A fictional project update."},
+    )
