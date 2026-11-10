@@ -5,11 +5,11 @@ Defines module and package information for guidelight, specifically the version.
 # Module version and package information
 __version_info__ = {
     "major": 0,
-    "minor": 6,
+    "minor": 7,
     "micro": 0,
     "releaselevel": "alpha",
     "post": 0,
-    "serial": 8,
+    "serial": 9,
 }
 
 
