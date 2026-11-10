@@ -130,6 +130,13 @@ for clone in clones:
 Release. A clone is not automatically deployed or coupled to its source:
 track, deploy, retire, and delete every returned Release independently.
 
+Clone, deploy, and retire require JSON response bodies because their SDK
+methods return decoded Release models. If Endeavor reports success but returns
+an empty or malformed JSON body, Guidelight raises `InvalidResponse`. The
+server action may already have completed; do not automatically retry it.
+Retrieve or list Releases to verify persisted state before deciding whether
+another action is appropriate.
+
 ## ReleaseGenerations manager
 
 ```python

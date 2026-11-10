@@ -97,11 +97,37 @@ experiment = experiments.update(
         renderer="go",
         prompts=[
             {"role": "system", "template": "Extract receipt fields."},
-            {"role": "user", "template": "{{ context }}"},
+            {"role": "user", "template": "{{ .context }}"},
         ],
     ),
 )
 ```
+For the Go renderer, fields use dot-prefixed template syntax. A Test Case
+context is available as `.context`, so `{{ .context }}` renders its text.
+For structured Test Case input, each `context_json` key is available by name.
+For example:
+
+```python
+prompts = [
+    {
+        "role": "system",
+        "template": "Classify the customer request.",
+    },
+    {
+        "role": "user",
+        "template": (
+            "Customer: {{ .customer_name }}\n"
+            "Order: {{ .order_id }}\n"
+            "Issue: {{ .issue }}"
+        ),
+    },
+]
+```
+
+A matching Test Case uses keys such as `customer_name`, `order_id`, and
+`issue`. If the resulting Experiment is released and deployed, callers provide
+the same keys to `Endeavor.run(context=...)`; the deployed Release already
+contains the prompts. See [Executing deployed Tasks](../execution.md#context-keys-and-prompt-variables).
 
 The **first `draft` → `ready` transition executes the Experiment
 asynchronously**. There is no `run()` manager method. The update response does

@@ -52,11 +52,15 @@ Use `guidelight.client()` when direct low-level endpoint access is needed.
 result = endeavor.run(
     "atlas-assistant",
     "summarize-note",
-    context={"note": "A fictional project update."},
+    context={"context": "A fictional project update."},
 )
 ```
 
-
+The dictionary passed as `context` is sent directly as the Task context, so
+its keys must match the deployed prompt's variables. The example above
+matches a Go template that uses `{{ .context }}`. See
+[Context keys and prompt variables](docs/execution.md#context-keys-and-prompt-variables)
+for prompt definitions and multi-key examples.
 
 ## Documentation
 

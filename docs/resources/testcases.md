@@ -86,6 +86,40 @@ if result.error:
     raise ValueError(f"Prompt rendering failed: {result.error}")
 ```
 
+A plain-text Test Case `context` is available to a Go template as
+`{{ .context }}`. When a Test Case uses structured `context_json`, its keys are
+available individually. For example, a context containing `customer_name`,
+`order_id`, and `issue` can be previewed with:
+
+```python
+result = global_test_cases.render(
+    test_case=structured_test_case,
+    renderer="go",
+    prompts=[
+        {
+            "index": 0,
+            "role": "system",
+            "template": "Classify the customer request.",
+        },
+        {
+            "index": 1,
+            "role": "user",
+            "template": (
+                "Customer: {{ .customer_name }}\n"
+                "Order: {{ .order_id }}\n"
+                "Issue: {{ .issue }}"
+            ),
+        },
+    ],
+)
+
+if result.error:
+    raise ValueError(f"Prompt rendering failed: {result.error}")
+```
+
+Template fields must match the Test Case context keys exactly. Rendering is a
+useful preflight check before transitioning an Experiment to `ready`.
+
 References to a specific Test Case are ULID-only for `get`, `update`, `delete`,
 `set_golden`, and `versions`; Test Case slugs raise `ValueError` locally.
 Agent, Task, and Experiment references used only to construct a list scope may
