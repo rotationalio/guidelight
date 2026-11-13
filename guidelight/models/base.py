@@ -49,4 +49,4 @@ class RequestModel(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize writable fields for an API request body."""
-        return self.model_dump(mode="json", exclude_none=True)
+        return self.model_dump(mode="json", by_alias=True, exclude_none=True)

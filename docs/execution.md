@@ -259,24 +259,6 @@ payload = response.content
 
 
 
-## `Release.test()` is different
-
-`Releases.test()` is a release-scoped smoke-test action:
-
-```python
-from guidelight.models import ReleaseTest
-
-smoke = endeavor.releases.test(
-    release.id,
-    ReleaseTest(input="Classify this fictional request."),
-)
-
-if smoke.error:
-    raise RuntimeError(smoke.error)
-print(smoke.output_text)
-```
-
-It addresses a specific Release ULID and returns `ReleaseTestResult` with
-`output_text` and `error`. It does not share the general execution signature,
-does not support files or arbitrary response decoding, and is not a substitute
-for calling the public deployed Task through `Endeavor.run()`.
+Release testing is performed in the Endeavor UI sandbox. Programmatic callers
+should use the deployed endpoint through `Endeavor.run()` or
+`Endeavor.run_with_result()` instead.

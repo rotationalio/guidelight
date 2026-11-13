@@ -36,7 +36,6 @@ already identifies the Task.
   clones in the destination Environments.
 - `deploy(ref) -> Release` deploys it using the server's clock.
 - `retire(ref) -> Release` retires it using the server's clock.
-- `test(ref, request=None, **fields) -> ReleaseTestResult` tests it.
 - `generations(ref) -> ReleaseGenerations` returns its Generation list
   manager.
 
@@ -48,7 +47,7 @@ these filters: `task_id`, `environment_id`, `experiment_id`, their plural
 before/after ranges.
 
 Every method that addresses a specific Release requires a Release ULID:
-`get`, `update`, `patch`, `delete`, `clone`, `deploy`, `retire`, `test`, and
+`get`, `update`, `patch`, `delete`, `clone`, `deploy`, `retire`, and
 `generations`. Release slugs are not supported and fail local validation.
 Experiment, Task, Environment, and Provider IDs inside request bodies are sent
 without local ULID-format validation; Environment values may follow whatever
@@ -84,15 +83,26 @@ global_created = global_releases.create(
 )
 ```
 
+## Experiment capability snapshot
+
+Creating a Release snapshots the Experiment configuration, including its
+selected Integration capabilities and the related Integration data. Changing
+or clearing the Experiment's selections afterward does not change an existing
+Release. Create a new Release when updated capability selections should be
+used by deployed execution.
+
+Selected Integration tools are available during deployed Release execution.
+Prompt and resource selections are retained in the snapshot but are not
+currently wired into execution in the same way as tools.
+
 ## Updates and lifecycle actions
 
 `ReleaseUpdate` accepts `provider_id`, `deployed_on`, and `retired_on`.
 `ReleasePatch` accepts the same fields but requires at least one non-`None`
-value. `ReleaseTest` requires `input`; `ReleaseTestResult` contains
-`output_text` and `error`.
+value. Use the Endeavor UI sandbox to test a deployed Release.
 
 ```python
-from guidelight.models import ReleasePatch, ReleaseTest, ReleaseUpdate
+from guidelight.models import ReleasePatch, ReleaseUpdate
 
 release = global_releases.update(
     staging_release.id,
@@ -105,10 +115,6 @@ release = global_releases.patch(
 )
 
 release = global_releases.deploy(release.id)
-result = global_releases.test(
-    release.id,
-    ReleaseTest(input="Extract this receipt."),
-)
 release = global_releases.retire(release.id)
 ```
 

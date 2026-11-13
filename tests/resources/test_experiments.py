@@ -1,6 +1,11 @@
 import pytest
 
-from guidelight.models import ExperimentCreate, ExperimentPatch
+from guidelight.models import (
+    ExperimentCapability,
+    ExperimentCapabilityUpdate,
+    ExperimentCreate,
+    ExperimentPatch,
+)
 from guidelight.resources import Experiments
 
 from .shared import EXPERIMENT_ID
@@ -104,6 +109,46 @@ def test_experiment_patch_rejects_unknown_fields_before_request(client):
         )
 
     assert client.calls == []
+
+
+def test_experiment_capabilities_replaces_selected_capabilities(client_factory):
+    client = client_factory([None])
+    experiments = Experiments(client)
+
+    experiments.capabilities(
+        EXPERIMENT_ID,
+        [ExperimentCapability(type="integration_tool", id="tool-1")],
+    )
+
+    assert client.calls == [
+        (
+            "PUT",
+            ("experiments", EXPERIMENT_ID, "capabilities"),
+            [{"type": "integration_tool", "id": "tool-1"}],
+            {},
+        )
+    ]
+
+
+def test_experiment_capabilities_accepts_typed_update_and_clears_selection(
+    client_factory,
+):
+    client = client_factory([None])
+    experiments = Experiments(client)
+
+    experiments.capabilities(
+        EXPERIMENT_ID,
+        ExperimentCapabilityUpdate(),
+    )
+
+    assert client.calls == [
+        (
+            "PUT",
+            ("experiments", EXPERIMENT_ID, "capabilities"),
+            [],
+            {},
+        )
+    ]
 
 
 def test_experiment_get_update_delete_and_set_test_cases_routes(client_factory):

@@ -18,6 +18,7 @@ from .resources import (
     Environments,
     Generations,
     GovernancePolicies,
+    Integrations,
     MediaCollection,
     Models,
     Providers,
@@ -46,6 +47,7 @@ class Endeavor:
         self.environments = Environments(client)
         self.generations = Generations(client)
         self.governance_policies = GovernancePolicies(client)
+        self.integrations = Integrations(client)
         self.media = MediaCollection(client)
         self.models = Models(client)
         self.providers = Providers(client)

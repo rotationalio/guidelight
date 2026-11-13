@@ -13,6 +13,7 @@ from .metrics import Metrics
 from .models import Models
 from .providers import Providers
 from .releases import ReleaseGenerations, Releases
+from .integrations import Integrations
 from .reviews import Reviews
 from .tasks import Tasks
 from .testcases import (
@@ -43,6 +44,7 @@ __all__ = [
     "Releases",
     "ResourceManager",
     "Reviews",
+    "Integrations",
     "Tasks",
     "TestCaseVersions",
     "TestCases",

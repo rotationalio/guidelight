@@ -14,6 +14,7 @@ cleanup sequence, read [Resource lifecycle](../lifecycle.md).
 - [Media](media.md)
 - [Metrics](metrics.md)
 - [Releases](releases.md)
+- [Integrations and Experiment Capabilities](integrations-and-capabilities.md)
 - [Comments and Reviews](comments-and-reviews.md)
 - [Environments](environments.md)
 - [Providers and Credentials](providers-and-credentials.md)

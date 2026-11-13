@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from .base import ModalityName, RequestModel, ResponseModel
+from .base import ModalityName, RequestModel, ResponseModel, TrimmedNonEmptyString
 
 ExperimentStatus = Literal[
     "unknown",
@@ -22,6 +22,36 @@ ExperimentStatus = Literal[
 
 RendererName = Literal["sprintf", "jinja", "go"]
 ExperimentRendererName = Literal["unknown", "sprintf", "jinja", "go"]
+
+
+ExperimentCapabilityType = Literal[
+    "integration_prompt",
+    "integration_resource",
+    "integration_tool",
+]
+
+
+class ExperimentCapability(RequestModel):
+    """A catalog capability selected for an Experiment."""
+
+    type: ExperimentCapabilityType
+    id: TrimmedNonEmptyString
+
+
+class ExperimentCapabilityResponse(ResponseModel):
+    """A selected capability reference returned by Endeavor."""
+
+    type: ExperimentCapabilityType
+    id: str
+
+
+class ExperimentCapabilityUpdate(RequestModel):
+    """The complete capability selection for an Experiment."""
+
+    capabilities: list[ExperimentCapability] = Field(default_factory=list)
+
+    def to_dict(self) -> list[dict[str, str]]:
+        return [item.to_dict() for item in self.capabilities]
 
 
 class Experiment(ResponseModel):
@@ -48,7 +78,7 @@ class Experiment(ResponseModel):
     parameters: Any = None
     usage: Any = None
     info: dict[str, Any] | None = None
-    capabilities: list[dict[str, Any]] | None = None
+    capabilities: list[ExperimentCapabilityResponse] | None = None
 
     @field_validator(
         "input_types",
@@ -80,7 +110,7 @@ class ExperimentCreate(RequestModel):
     renderer: RendererName | None = None
     prompts: list[Any] | None = None
     parameters: Any = None
-    capabilities: list[dict[str, Any]] | None = None
+    capabilities: list[ExperimentCapability] | None = None
 
 
 class ExperimentUpdate(RequestModel):
@@ -99,7 +129,7 @@ class ExperimentUpdate(RequestModel):
     renderer: RendererName
     prompts: list[Any] = Field(min_length=1)
     parameters: Any = None
-    capabilities: list[dict[str, Any]] | None = None
+    capabilities: list[ExperimentCapability] | None = None
 
     @model_validator(mode="after")
     def validate_text_input(self) -> ExperimentUpdate:
@@ -131,4 +161,4 @@ class ExperimentPatch(RequestModel):
     renderer: RendererName | None = None
     prompts: list[Any] | None = None
     parameters: Any = None
-    capabilities: list[dict[str, Any]] | None = None
+    capabilities: list[ExperimentCapability] | None = None
