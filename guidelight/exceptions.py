@@ -63,3 +63,55 @@ class UnsupportedResponseType(EndeavorError):
 
 class InvalidResponse(EndeavorError):
     """The server returned a successful response with an invalid body."""
+
+
+class IntegrationAuthorizationRequired(UserWarning):
+    """An Integration requires browser-based authorization."""
+
+    def __init__(self, integration_id: str | None, integration_url: str):
+        self.integration_id = integration_id
+        self.integration_url = integration_url
+        super().__init__(
+            "Integration authorization is required. "
+            f"Open {self.integration_url} in Endeavor to authorize it."
+        )
+
+
+class IntegrationRegistrationRequired(UserWarning):
+    """An Integration requires OAuth application registration."""
+
+    def __init__(self, integration_id: str | None, integration_url: str):
+        self.integration_id = integration_id
+        self.integration_url = integration_url
+        super().__init__(
+            "Integration OAuth application registration is required. "
+            f"Open {self.integration_url} in Endeavor to configure it."
+        )
+
+
+class IntegrationStatusError(EndeavorError):
+    """An Integration reached a terminal failure status."""
+
+    def __init__(self, integration_id: str, status: str):
+        self.integration_id = integration_id
+        self.status = status
+        super().__init__(
+            f"Integration {integration_id} reached terminal status {status!r}."
+        )
+
+
+class IntegrationStatusTimeout(EndeavorError):
+    """An Integration did not reach a terminal status before the timeout."""
+
+    def __init__(self, integration_id: str, status: str, timeout: float):
+        self.integration_id = integration_id
+        self.status = status
+        self.timeout = timeout
+        super().__init__(
+            f"Integration {integration_id} remained in status {status!r} "
+            f"after {timeout:g} seconds."
+        )
+
+
+class IntegrationPendingWarning(UserWarning):
+    """An Integration was created while asynchronous discovery is pending."""

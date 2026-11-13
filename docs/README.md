@@ -14,6 +14,8 @@ task-oriented AI systems on Endeavor.
   JSON, and multimodal responses.
 - [Resource lifecycle](lifecycle.md) — create an Agent hierarchy, execute an
   Experiment, deploy a Release, and clean up safely.
+- [Integrations and Experiment Capabilities](resources/integrations-and-capabilities.md)
+  — discover MCP capabilities and select them for Experiments.
 - [Environments](resources/environments.md), [Providers and
   Credentials](resources/providers-and-credentials.md), and [Models and
   Governance](resources/models-and-governance.md) — manage configuration,
@@ -39,6 +41,7 @@ The `Endeavor` object exposes:
 
 - `agents`, `test_cases`, `generations`, and `releases` as core top-level
   resource managers;
+- `integrations` for external MCP servers and their discovered capabilities;
 - `environments`, `providers`, `models`, and `governance_policies` as
   configuration, catalog, and governance managers;
 - `media` for authorized Media metadata and downloads;

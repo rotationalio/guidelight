@@ -19,12 +19,34 @@ from .execution import (
 )
 from .experiment import (
     Experiment,
+    ExperimentCapability,
+    ExperimentCapabilityResponse,
+    ExperimentCapabilityType,
+    ExperimentCapabilityUpdate,
     ExperimentCreate,
     ExperimentPatch,
     ExperimentUpdate,
 )
 from .generation import Generation, GenerationTestCaseCreate
 from .governance import GovernancePolicy, GovernancePolicyCreate, GovernancePolicyPatch
+from .integration import (
+    Integration,
+    IntegrationCapabilities,
+    IntegrationCreate,
+    IntegrationPatch,
+    IntegrationUpdate,
+    MCPPrompt,
+    MCPPromptArgument,
+    MCPResource,
+    MCPResourceAnnotations,
+    MCPTool,
+    MCPToolAnnotations,
+    OAuthCredentials,
+    PromptCapability,
+    ResourceCapability,
+    Role,
+    ToolCapability,
+)
 from .media import Media, MediaUpdate
 from .metric import Metric, MetricCreate, MetricOption, MetricUpdate
 from .model import Model, ModelUsage
@@ -44,8 +66,6 @@ from .release import (
     ReleaseClone,
     ReleaseCreate,
     ReleasePatch,
-    ReleaseTest,
-    ReleaseTestResult,
     ReleaseUpdate,
 )
 from .review import Review
@@ -84,6 +104,10 @@ __all__ = [
     "ExecutionResult",
     "ExecutionUsage",
     "Experiment",
+    "ExperimentCapability",
+    "ExperimentCapabilityResponse",
+    "ExperimentCapabilityType",
+    "ExperimentCapabilityUpdate",
     "ExperimentCreate",
     "ExperimentPatch",
     "ExperimentUpdate",
@@ -93,6 +117,22 @@ __all__ = [
     "GovernancePolicy",
     "GovernancePolicyCreate",
     "GovernancePolicyPatch",
+    "Integration",
+    "IntegrationCapabilities",
+    "IntegrationCreate",
+    "IntegrationPatch",
+    "IntegrationUpdate",
+    "MCPPrompt",
+    "MCPPromptArgument",
+    "MCPResource",
+    "MCPResourceAnnotations",
+    "MCPTool",
+    "MCPToolAnnotations",
+    "OAuthCredentials",
+    "PromptCapability",
+    "ResourceCapability",
+    "Role",
+    "ToolCapability",
     "Media",
     "MediaUpdate",
     "Metric",
@@ -119,8 +159,6 @@ __all__ = [
     "ReleaseClone",
     "ReleaseCreate",
     "ReleasePatch",
-    "ReleaseTest",
-    "ReleaseTestResult",
     "ReleaseUpdate",
     "RenderedMessage",
     "RenderedPrompt",

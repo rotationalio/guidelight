@@ -3,6 +3,8 @@ from pydantic import ValidationError
 
 from guidelight.models import (
     Experiment,
+    ExperimentCapability,
+    ExperimentCapabilityUpdate,
     ExperimentCreate,
     ExperimentPatch,
     ExperimentUpdate,
@@ -43,7 +45,7 @@ def test_experiment_generation_and_release_models_decode_nested_data():
             "endpoint": "/api/a/t",
         }
     )
-    assert experiment.capabilities[0]["id"] == "tool-1"
+    assert experiment.capabilities[0].id == "tool-1"
     assert generation.examples[0].title == "Example"
     assert release.is_deployed is True
 
@@ -125,3 +127,30 @@ def test_experiment_patch_serializes_only_supplied_fields():
 def test_experiment_patch_rejects_unknown_fields():
     with pytest.raises(ValidationError):
         ExperimentPatch(usage={"requests": 1})
+
+
+def test_experiment_capability_update_serializes_replacement():
+    request = ExperimentCapabilityUpdate(
+        capabilities=[
+            ExperimentCapability(type="integration_tool", id="tool-1"),
+            ExperimentCapability(type="integration_prompt", id="prompt-1"),
+        ]
+    )
+
+    assert request.to_dict() == [
+        {"type": "integration_tool", "id": "tool-1"},
+        {"type": "integration_prompt", "id": "prompt-1"},
+    ]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"type": "unsupported", "id": "capability-1"},
+        {"type": "integration_tool", "id": ""},
+        {"type": "integration_tool"},
+    ],
+)
+def test_experiment_capability_rejects_invalid_references(fields):
+    with pytest.raises(ValidationError):
+        ExperimentCapability(**fields)
