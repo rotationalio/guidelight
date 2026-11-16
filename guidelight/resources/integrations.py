@@ -142,8 +142,11 @@ class Integrations(CollectionManager[Integration]):
         *,
         notify_pending: bool = False,
     ) -> None:
-        """Raise a descriptive exception for terminal non-success states."""
-        if integration.status == "pending":
+        """Warn for setup states and raise for failure or unknown states."""
+        status = integration.status
+        integration_id = integration.id or "unknown"
+
+        if status == "pending":
             if notify_pending:
                 warnings.warn(
                     "Integration created and discovery is still in progress. "
@@ -151,10 +154,7 @@ class Integrations(CollectionManager[Integration]):
                     IntegrationPendingWarning,
                     stacklevel=3,
                 )
-            return
-        if integration.status == "initializing":
-            return
-        if integration.status == "auth_required":
+        elif status == "auth_required":
             warnings.warn(
                 IntegrationAuthorizationRequired(
                     integration.id,
@@ -162,8 +162,7 @@ class Integrations(CollectionManager[Integration]):
                 ),
                 stacklevel=3,
             )
-            return
-        if integration.status == "reg_required":
+        elif status == "reg_required":
             warnings.warn(
                 IntegrationRegistrationRequired(
                     integration.id,
@@ -171,16 +170,16 @@ class Integrations(CollectionManager[Integration]):
                 ),
                 stacklevel=3,
             )
-            return
-        if integration.status in {
+        elif status in {"initializing", "connected"}:
+            pass
+        elif status in {
             "error",
             "disconnected",
             "disabled",
         }:
-            raise IntegrationStatusError(
-                integration.id or "unknown",
-                integration.status,
-            )
+            raise IntegrationStatusError(integration_id, status)
+        else:
+            raise IntegrationStatusError(integration_id, status or "unknown")
 
     def _ui_url(self, integration_id: str | None) -> str:
         """Return the Endeavor UI URL for an Integration."""

@@ -197,6 +197,30 @@ def test_wait_for_status_raises_for_terminal_failure(client_factory, status):
     assert raised.value.status == status
 
 
+@pytest.mark.parametrize("status", ["initializing", "connected"])
+def test_raise_for_status_accepts_nonfailure_states(client, status):
+    Integrations(client)._raise_for_status(
+        Integration(id=INTEGRATION_ID, status=status)
+    )
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        ("paused", "paused"),
+        ("", "unknown"),
+    ],
+)
+def test_raise_for_status_rejects_unknown_states(client, status, expected):
+    with pytest.raises(IntegrationStatusError) as raised:
+        Integrations(client)._raise_for_status(
+            Integration(id=INTEGRATION_ID, status=status)
+        )
+
+    assert raised.value.integration_id == INTEGRATION_ID
+    assert raised.value.status == expected
+
+
 def test_wait_for_status_raises_after_timeout(client_factory, monkeypatch):
     client = client_factory([{"id": INTEGRATION_ID, "status": "pending"}])
     times = iter([100.0, 101.0])
