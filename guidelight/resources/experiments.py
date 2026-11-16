@@ -12,6 +12,7 @@ from .base import (
     resolve_resource_ref,
 )
 from .comments import Comments
+from ..models import ExperimentCapability, ExperimentCapabilityUpdate
 from .reviews import Reviews
 from .testcases import TestCases
 
@@ -111,12 +112,21 @@ class Experiments(CollectionManager[Experiment]):
         """Delete an Experiment by ID or supported reference."""
         self.client.delete("experiments", resolve_resource_ref(ref))
 
-    def capabilities(self, ref, capabilities: list[dict[str, Any]]) -> None:
+    def capabilities(
+        self,
+        ref,
+        capabilities: list[ExperimentCapability] | ExperimentCapabilityUpdate,
+    ) -> None:
         """Replace the capability associations for an Experiment."""
         # Endeavor binds this endpoint directly to ExperimentCapabilities and
         # returns HTTP 204 after replacing the association set.
+        request = (
+            capabilities
+            if isinstance(capabilities, ExperimentCapabilityUpdate)
+            else ExperimentCapabilityUpdate(capabilities=capabilities)
+        )
         self.client.put(
-            capabilities,
+            request.to_dict(),
             "experiments",
             resolve_resource_ref(ref),
             "capabilities",

@@ -6,8 +6,6 @@ from ..models import (
     ReleaseClone,
     ReleaseCreate,
     ReleasePatch,
-    ReleaseTest,
-    ReleaseTestResult,
     ReleaseUpdate,
 )
 from .base import (
@@ -130,12 +128,6 @@ class Releases(CollectionManager[Release]):
         return Release.from_dict(
             self.client.post({}, "releases", reference(ref), "retire")
         )
-
-    def test(self, ref, request=None, **fields) -> ReleaseTestResult:
-        """Execute a test request against a Release."""
-        request = request_object(ReleaseTest, request, fields)
-        body = self.client.post(request.to_dict(), "releases", reference(ref), "test")
-        return ReleaseTestResult.from_dict(body)
 
     def generations(self, ref) -> ReleaseGenerations:
         """Return a Generation manager scoped to a Release."""

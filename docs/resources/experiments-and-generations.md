@@ -30,8 +30,9 @@ experiments = tasks.experiments(task)  # Task model, slug, or ULID
 - `patch(ref, request: ExperimentPatch | None = None, **fields) -> Experiment`
   partially updates writable fields.
 - `delete(ref) -> None` deletes the Experiment.
-- `capabilities(ref, capabilities: list[dict]) -> None` replaces its
-  capability associations.
+- `capabilities(ref, capabilities: list[ExperimentCapability] |
+  ExperimentCapabilityUpdate) -> None` replaces its complete capability
+  selection.
 - `test_cases(ref) -> TestCases` returns an Experiment-scoped Test Case list
   manager.
 - `set_test_cases(ref, version_ids: list[str])` replaces associated Test Case
@@ -140,12 +141,21 @@ Experiment.
 
 Other actions and metadata updates:
 
+Capability updates use replacement semantics: the submitted list becomes the
+complete selection. Pass `ExperimentCapabilityUpdate()` to clear every
+selection.
+
 ```python
-from guidelight.models import ExperimentPatch
+from guidelight.models import ExperimentCapability, ExperimentPatch
 
 experiments.capabilities(
     experiment.id,
-    [{"name": "structured-output"}],
+    [
+        ExperimentCapability(
+            type="integration_tool",
+            id="<integration-tool-ulid>",
+        )
+    ],
 )
 
 experiment = experiments.patch(

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from guidelight.models import ReleaseCreate, ReleaseTest
+from guidelight.models import ReleaseCreate
 from guidelight.resources import Releases
 
 from .shared import (
@@ -70,17 +70,13 @@ def test_release_lifecycle_uses_documented_action_paths(client_factory):
         [
             {"id": "release-1", "is_deployed": True},
             {"id": "release-1", "is_retired": True},
-            {"output_text": "ok"},
         ]
     )
     releases = Releases(client)
     releases.deploy(RELEASE_ID)
     releases.retire(RELEASE_ID)
-    result = releases.test(RELEASE_ID, ReleaseTest(input="hello"))
     assert client.calls[0][1] == ("releases", RELEASE_ID, "deploy")
     assert client.calls[1][1] == ("releases", RELEASE_ID, "retire")
-    assert client.calls[2][1] == ("releases", RELEASE_ID, "test")
-    assert result.output_text == "ok"
 
 
 def test_task_scoped_release_create_and_release_generation_list(client_factory):

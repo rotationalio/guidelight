@@ -227,22 +227,8 @@ Environments, producing one Release per Environment. Global
 `endeavor.releases.create()` is also available, but its `ReleaseCreate` must
 include `task_id`.
 
-An optional release-scoped smoke test returns a `ReleaseTestResult`:
-
-```python
-from guidelight.models import ReleaseTest
-
-smoke = releases.test(
-    release.id,
-    ReleaseTest(input="Classify this fictional delivery question."),
-)
-
-if smoke.error:
-    raise RuntimeError(smoke.error)
-```
-
-This is distinct from the deployed endpoint call described next; see
-[`Release.test()` is different](execution.md#releasetest-is-different).
+Use the Endeavor UI sandbox to test a deployed Release. For programmatic
+execution, call the deployed endpoint as described next.
 
 ## 7. Run the deployed Task
 

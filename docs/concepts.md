@@ -21,6 +21,8 @@ flowchart TD
     R[Release]
     ENV[Environment]
     MODEL[Model]
+    I[Integration]
+    CAP[Selected MCP Capability]
     EC[Experiment Comment]
     RV[Review]
 
@@ -40,6 +42,8 @@ flowchart TD
     R -->|promotes| X
     R -->|targets| ENV
     R -->|deployed execution produces| G
+    I -->|advertises| CAP
+    X -->|selects| CAP
     G -.->|may be a golden output for| TC
 ```
 
@@ -55,6 +59,8 @@ flowchart TD
 - A **Metric** defines how Task Generations may be scored.
 - A **Release** promotes an Experiment for a Task into an Environment at a
   semantic version.
+- An **Integration** is an external MCP server. It advertises prompts,
+  resources, and tools; an Experiment selects specific capability IDs.
 
 See [Resource lifecycle](lifecycle.md) for the order in which these resources
 are normally created and removed.
@@ -68,6 +74,7 @@ endeavor.agents
 endeavor.test_cases
 endeavor.generations
 endeavor.releases
+endeavor.integrations
 endeavor.environments
 endeavor.providers
 endeavor.models
@@ -125,7 +132,7 @@ because Endeavor exposes only version-specific `get()` and `delete()` routes.
 
 Models are read-only catalog resources. Environments, Providers, Credentials,
 and Governance Policies are configuration resources with typed request models
-and route-specific filters. Integrations are not exposed by this SDK version.
+and route-specific filters. Integrations represent external MCP servers. The SDK supports asynchronous discovery of their prompts, resources, and tools, while authorization may require completing setup in the Endeavor UI.
 
 ## Multimodal data
 

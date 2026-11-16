@@ -70,16 +70,3 @@ class ReleaseClone(RequestModel):
     """Destination environments accepted when cloning a Release."""
 
     environments: list[str] = Field(min_length=1)
-
-
-class ReleaseTest(RequestModel):
-    """Input context accepted when testing a Release."""
-
-    input: str
-
-
-class ReleaseTestResult(ResponseModel):
-    """Output returned after testing a Release."""
-
-    output_text: str = ""
-    error: str = ""
