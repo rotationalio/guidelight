@@ -24,6 +24,9 @@ with endeavor.media.download(
     filename=media.name,
 ) as download:
     download.write_to("generated/" + media.name)
+
+with endeavor.media.thumbnail(media.id) as thumbnail:
+    thumbnail.write_to("generated/" + media.name + ".thumbnail")
 ```
 
 The manager supports:
@@ -34,6 +37,8 @@ The manager supports:
 - `update(ref, request=None, **fields) -> Media`
 - `delete(ref) -> None`
 - `download(ref, filename="download") -> MediaDownload`
+- `thumbnail(ref) -> MediaDownload` streams the generated thumbnail for image
+  Media.
 
 `list()` accepts `content_type`, `modality`, and `created_by` filters.
 `search()` accepts those filters plus `unknown`; `unknown=True` restricts
@@ -42,6 +47,11 @@ results to Media whose content type Endeavor records as unknown.
 `MediaDownload` is a context manager. Its `write_to()` method accepts either a
 filesystem path or an open binary stream and supports a configurable
 `chunk_size`.
+
+`thumbnail()` returns the same streaming wrapper as `download()`, but uses the
+server-generated thumbnail endpoint and does not require a filename argument.
+It is intended for image Media previews; non-image Media will not have a
+thumbnail.
 
 The download `filename` must be one nonempty, path-safe component. Absolute
 paths, separators, traversal components, query strings, fragments, and

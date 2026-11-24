@@ -27,6 +27,7 @@ agents = endeavor.agents
   its writable fields.
 - `delete(ref) -> None` deletes it.
 - `tasks(ref) -> AgentTasks` returns the Agent-scoped Task manager.
+- `test_cases(ref) -> TestCases` returns an Agent-scoped Test Case manager.
 
 For `get`, `update`, `delete`, and `tasks`, `ref` may be an Agent model, ULID,
 or slug. Agent create and update requests do not expose a writable `slug`;
@@ -95,6 +96,8 @@ model, slug, or ULID.
 - `test_cases(ref) -> TestCases` returns a Task-scoped Test Case manager.
 - `metrics(ref) -> Metrics` returns a Task-scoped Metric manager.
 - `releases(ref) -> Releases` returns a Task-scoped Release manager.
+- `deployment(ref) -> TaskDeployment` retrieves deployment state across
+  Environments.
 
 `TaskCreate` requires `name` and `description`; it optionally accepts `slug`,
 `bao`, and an initial `metrics: list[MetricCreate]`. `TaskUpdate` requires
@@ -127,7 +130,13 @@ experiments = tasks.experiments(task)
 test_cases = tasks.test_cases(task)
 metrics = tasks.metrics(task)
 releases = tasks.releases(task)
+deployment = tasks.deployment(task)
 ```
+
+`TaskDeployment` contains one `TaskDeploymentInfo` entry per Environment,
+including the Environment name, endpoint, status, and associated Release when
+available. Task usage is not exposed because Endeavor's current Task usage
+endpoint returns placeholder zero values rather than persisted telemetry.
 
 Delete Task dependents first: Reviews, Generations, retired Releases,
 Experiments, Metrics, and associated Test Cases or versions. Then delete the

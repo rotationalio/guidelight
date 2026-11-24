@@ -69,7 +69,14 @@ from .release import (
     ReleaseUpdate,
 )
 from .review import Review
-from .task import Task, TaskCounts, TaskCreate, TaskUpdate
+from .task import (
+    Task,
+    TaskCounts,
+    TaskCreate,
+    TaskDeployment,
+    TaskDeploymentInfo,
+    TaskUpdate,
+)
 from .testcase import (
     PromptRenderer,
     PromptRenderRequest,
@@ -166,6 +173,8 @@ __all__ = [
     "Task",
     "TaskCounts",
     "TaskCreate",
+    "TaskDeployment",
+    "TaskDeploymentInfo",
     "TaskUpdate",
     "TestCase",
     "TestCaseArchiveRequest",

@@ -100,3 +100,14 @@ class MediaCollection(CollectionManager[Media]):
             raw=True,
         )
         return MediaDownload(response)
+
+    def thumbnail(self, ref: Any) -> MediaDownload:
+        """Stream the generated thumbnail for image Media."""
+        response = self.client.get(
+            "media",
+            reference(ref),
+            "thumbnail",
+            stream=True,
+            raw=True,
+        )
+        return MediaDownload(response)

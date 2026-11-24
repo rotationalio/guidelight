@@ -151,3 +151,27 @@ def test_media_download_context_closes_http_response(httpserver):
         assert not response.raw.closed
 
     assert response.raw.closed
+
+
+def test_media_thumbnail_streams_response(client):
+    response = Response()
+    response.status_code = 200
+    response.headers["Content-Type"] = "image/png"
+    response._content = b"thumbnail bytes"
+    response._content_consumed = True
+    client.responses.append(response)
+
+    destination = BytesIO()
+    with MediaCollection(client).thumbnail(MEDIA_ID) as thumbnail:
+        assert thumbnail.content_type == "image/png"
+        assert thumbnail.write_to(destination) == len(b"thumbnail bytes")
+
+    assert destination.getvalue() == b"thumbnail bytes"
+    assert client.calls == [
+        (
+            "GET",
+            ("media", MEDIA_ID, "thumbnail"),
+            None,
+            {"stream": True, "raw": True},
+        )
+    ]
