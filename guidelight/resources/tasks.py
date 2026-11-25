@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..models import Task, TaskCreate, TaskUpdate
+from ..models import (
+    Task,
+    TaskCreate,
+    TaskDeployment,
+    TaskUpdate,
+)
 from .base import (
     Page,
     CollectionManager,
@@ -86,3 +91,8 @@ class Tasks(CollectionManager[Task]):
     def releases(self, ref: Any) -> Releases:
         """Return a Release manager scoped to a Task."""
         return Releases(self.client, task=resolve_resource_ref(ref))
+
+    def deployment(self, ref: Any) -> TaskDeployment:
+        """Retrieve the current deployment in each Environment for a Task."""
+        body = self.client.get("tasks", resolve_resource_ref(ref), "deployment")
+        return TaskDeployment.from_dict(body)

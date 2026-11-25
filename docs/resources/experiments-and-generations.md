@@ -35,8 +35,8 @@ experiments = tasks.experiments(task)  # Task model, slug, or ULID
   selection.
 - `test_cases(ref) -> TestCases` returns an Experiment-scoped Test Case list
   manager.
-- `set_test_cases(ref, version_ids: list[str])` replaces associated Test Case
-  Versions and returns the low-level response.
+- `set_test_cases(ref, version_ids: list[str]) -> None` replaces associated
+  Test Case Versions. Endeavor confirms success with `204 No Content`.
 - `comments(ref) -> Comments` returns its Comment manager.
 - `reviews(ref) -> Reviews` returns its Review manager.
 
@@ -49,7 +49,8 @@ Experiment model, slug, or ULID. `set_test_cases`, `comments`, and `reviews`
 require a strict Experiment ULID; a slug fails local validation.
 `set_test_cases()` takes **Test Case Version IDs**, such as
 `test_case.latest.id`, never parent Test Case IDs. The list's body values are
-sent as supplied and are not ULID-format-validated locally.
+sent as supplied and are not ULID-format-validated locally. Passing an empty
+list removes all Test Case Version associations.
 
 ### Models and lifecycle
 

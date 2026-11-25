@@ -53,3 +53,18 @@ class TaskUpdate(RequestModel):
     description: str
     slug: str | None = None
     bao: Any = None
+
+
+class TaskDeploymentInfo(ResponseModel):
+    """Deployment state for a Task in one Environment."""
+
+    environment: str = ""
+    endpoint: str = ""
+    status: str = ""
+    release: Any = None
+
+
+class TaskDeployment(ResponseModel):
+    """Deployment state for a Task across Environments."""
+
+    environments: list[TaskDeploymentInfo] = Field(default_factory=list)

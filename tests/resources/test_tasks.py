@@ -107,3 +107,34 @@ def test_parent_scoped_experiment_metric_and_test_case_routes(client_factory):
     assert client.calls[0][1] == ("tasks", "task-1", "experiments")
     assert client.calls[1][1] == ("tasks", "task-1", "metrics")
     assert client.calls[2][1] == ("tasks", "task-1", "testcases")
+
+
+def test_agent_test_cases_uses_agent_scoped_route(client_factory):
+    client = client_factory([{"page": {}, "testcases": []}])
+
+    page = Agents(client).test_cases("agent-1").list(page_size=10)
+
+    assert page.items == []
+    assert client.calls == [
+        (
+            "GET",
+            ("agents", "agent-1", "testcases"),
+            {"offset": 0, "page_size": 10},
+        )
+    ]
+
+
+def test_task_deployment_uses_task_route(client_factory):
+    client = client_factory(
+        [
+            {"environments": [{"environment": "production", "status": "Live"}]},
+        ]
+    )
+    tasks = Agents(client).tasks("agent-1")
+
+    deployment = tasks.deployment(TASK_ID)
+
+    assert deployment.environments[0].status == "Live"
+    assert client.calls == [
+        ("GET", ("tasks", TASK_ID, "deployment"), None),
+    ]

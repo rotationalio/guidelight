@@ -156,7 +156,7 @@ def test_experiment_get_update_delete_and_set_test_cases_routes(client_factory):
         [
             {"id": EXPERIMENT_ID, "name": "Evaluation"},
             {"id": EXPERIMENT_ID, "name": "Updated Evaluation"},
-            {"success": True},
+            None,
         ]
     )
     experiments = Experiments(client)
@@ -178,7 +178,7 @@ def test_experiment_get_update_delete_and_set_test_cases_routes(client_factory):
 
     assert experiment.id == EXPERIMENT_ID
     assert updated.name == "Updated Evaluation"
-    assert result == {"success": True}
+    assert result is None
     assert client.calls[0] == (
         "GET",
         ("experiments", EXPERIMENT_ID),
@@ -199,3 +199,42 @@ def test_experiment_get_update_delete_and_set_test_cases_routes(client_factory):
         {"test_case_version_ids": ["version-1"]},
         {},
     )
+
+
+def test_experiment_test_cases_uses_experiment_scoped_route(client_factory):
+    client = client_factory([{"page": {}, "testcases": []}])
+
+    page = Experiments(client).test_cases(EXPERIMENT_ID).list(page_size=10)
+
+    assert page.items == []
+    assert client.calls == [
+        (
+            "GET",
+            ("experiments", EXPERIMENT_ID, "testcases"),
+            {"offset": 0, "page_size": 10},
+        )
+    ]
+
+
+def test_experiment_set_test_cases_replaces_associations(client_factory):
+    client = client_factory([None, None])
+
+    result = Experiments(client).set_test_cases(EXPERIMENT_ID, ["version-1"])
+    empty_result = Experiments(client).set_test_cases(EXPERIMENT_ID, [])
+
+    assert result is None
+    assert empty_result is None
+    assert client.calls == [
+        (
+            "POST",
+            ("experiments", EXPERIMENT_ID, "testcases"),
+            {"test_case_version_ids": ["version-1"]},
+            {},
+        ),
+        (
+            "POST",
+            ("experiments", EXPERIMENT_ID, "testcases"),
+            {"test_case_version_ids": []},
+            {},
+        ),
+    ]

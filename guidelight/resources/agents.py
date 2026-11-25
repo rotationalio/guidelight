@@ -7,6 +7,7 @@ from typing import Any
 from ..models.agent import Agent, AgentCreate, AgentUpdate
 from .base import Page, CollectionManager, decode_page, reference, request_object
 from .tasks import Tasks
+from .testcases import TestCases
 
 
 class AgentTasks(Tasks):
@@ -92,3 +93,7 @@ class Agents(CollectionManager[Agent]):
             self.client,
             reference(ref, allow_slug=True),
         )
+
+    def test_cases(self, ref: Any) -> TestCases:
+        """Return a Test Case manager scoped to an Agent."""
+        return TestCases(self.client, agent=reference(ref, allow_slug=True))

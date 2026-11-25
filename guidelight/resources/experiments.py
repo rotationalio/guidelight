@@ -136,9 +136,9 @@ class Experiments(CollectionManager[Experiment]):
         """Return a Test Case manager scoped to an Experiment."""
         return TestCases(self.client, experiment=resolve_resource_ref(ref))
 
-    def set_test_cases(self, ref, version_ids: list[str]):
-        """Replace the Test Case version associations for an Experiment."""
-        return self.client.post(
+    def set_test_cases(self, ref, version_ids: list[str]) -> None:
+        """Replace Test Case version associations; Endeavor returns no content."""
+        self.client.post(
             {"test_case_version_ids": version_ids},
             "experiments",
             reference(ref),
